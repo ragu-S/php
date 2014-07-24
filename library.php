@@ -20,7 +20,13 @@ class Html {
 
     public function htmlBody() {
         ?>
-        
+        <nav>
+            <ul>
+                <li><a href="addItem.php">Add</a></li>
+                <li><a href="sampleView.php">View All</a></li>
+                
+            </ul>
+        </nav>
         <?php
     }
 

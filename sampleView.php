@@ -1,6 +1,6 @@
 <?php
 
-require("add2.php");
+require("library.php");
 $newDoc = new html();
 
 $data = new dbConnect();
@@ -8,6 +8,7 @@ $data = new dbConnect();
 $arrayTable = $data->retrieveRow();
 //print_r($arrayTable);
 $newDoc->htmlHead();
+$newDoc->htmlBody();
 ?>
 
 <!-- <section class="wrapper">

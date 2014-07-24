@@ -10,7 +10,7 @@ require("library.php");
 
 $html = new html();
 $html->htmlHead();
-
+$html->htmlBody();
 $form = new FormItemEntry();
 
 if($_POST || $_GET) {
