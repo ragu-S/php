@@ -1,0 +1,84 @@
+/* css styles for GameSite */
+
+*, *:after, *:before {
+    margin: 0;
+    padding: 0;
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+
+img {
+    width: auto;
+    max-width: 100%;
+    height: auto !important;
+}
+
+.wrapper { /* Mobile first deployment*/ 
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Rows */
+.wrapper:after, .row:after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+/* Columns */
+[class*='column-'] {
+    float: left;
+    padding: 1em;
+    width: 100%;
+    min-height: 1px;
+}
+
+.purple {
+    background: purple;
+}
+
+.red {
+    background: red;
+}
+
+/* for larger screens, also with an arbitary break point of 30em */
+@media only screen and (min-width: 30em) {
+
+}
+
+table.content_query, tr {
+    border: solid 2px;
+    border-collapse: collapse;
+    min-height: 300px;
+}
+table.content_query tr:first-child td {
+    text-align: center;
+    border-right: solid 1px ;
+    padding: 5px 15px;
+    font-weight: bold; 
+    color: white;
+    background-color: black;
+    height: 3em;
+    width: 2.5em;
+}
+table.content_query td {
+    text-align: center;
+    padding: 2em;
+    /*border-bottom:;*/
+    border: solid black 1px;
+    min-width: 2em;
+}
+
+table.registration tr td:nth-child(3n) {
+    /*background: green;*/
+}
+
+table.registration td {
+    padding: 0.2em 0.5em;
+}
+
+td.error {
+    color: red;
+}

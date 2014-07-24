@@ -1,0 +1,275 @@
+/* Our Gaming Website CSS */
+
+@charset "UTF-08";
+
+body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, form, fieldset, input, textarea, p, blockquote, th, td {
+  margin: 0px;
+  padding: 0px;
+}
+
+body{
+  margin: 0px;
+  padding: 0px;
+  font-size: 12px;
+  font-family: Arial;
+  background-color:#121212;
+ /* background-image: url("../images/mauria_by_machiavellicro.jpg");
+  opacity: 0.4;*/
+}
+
+
+
+h1 {
+  font-size: 2.5em;
+  margin-bottom: 20px;
+}
+
+.title {
+  text-shadow: 1px 2px 2px white;
+}
+
+.page {
+  font-size: 1em;
+  margin: 0px auto 0px auto;
+  padding: 0px;
+  background-color: #fff;
+  max-width: 1000px;
+  position: relative;
+  
+}
+
+.page header{
+  display: block;
+  position: relative;
+  height: 125px;
+  background-color: #000;
+  /*background: linear-gradient(340deg, #222,  #444, #000, #111, #111, #000);*/
+  box-shadow: 0px 2px 3px rgba(0,0,0,0.3);
+}
+
+.page header a.logo {
+  position: absolute;
+  top: 45px;
+  left: 45px;
+  display: block;
+  width: 400px;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  text-decoration: none;
+  font-family: Tahoma;
+  font-size: 3em;
+  font-weight: 900;
+  text-shadow: 1px 2px 2px #66CC33;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+nav { 
+  position: absolute; 
+  width: 1000px; top:125px; 
+  margin: 0px; 
+  padding: 10px 0px 10px 0px; 
+  height: 40px;
+  background: linear-gradient( #000, #000, #000, #000, #000, #fff);
+  /*border-top: solid 4px #66CC33;*/
+ /* border-top: 1px solid white;
+  border-bottom: 1px solid white;*/
+  /*background: linear-gradient( #777, #808080, #DDD, #FFF);*/
+}
+
+.page nav a {
+  width: 75px;
+  text-align: center;
+  color: #ccc;
+  /*font-size: 1.1em;*/
+  padding: 7px 20px 7px 20px;
+  text-decoration: none;
+  font-weight: bold;
+  display: inline-block;
+  margin: 0px 2px 4px 2px;
+  font-size: 1.15em;
+}
+
+.page nav a:hover {
+  color: #990000;
+}
+
+/*.page nav a.nav_0 { background-color: #CC0000; }
+.page nav a.nav_0:hover { background-color: #990000; }
+.page nav a.nav_1 { background-color: #FF6600; }
+.page nav a.nav_1:hover { background-color: #CC6600; }
+.page nav a.nav_2 { background-color: #660099; }
+.page nav a.nav_2:hover { background-color: #330066; }
+.page nav a.nav_3 { background-color: #3333CC; }
+.page nav a.nav_3:hover { background-color: #000099; }
+.page nav a.nav_4 { background-color: #339933; }
+.page nav a.nav_4:hover { background-color: #336633; }
+.page nav a.nav_5 { background-color: #FFCC00; }
+.page nav a.nav_5:hover { background-color: #999900; }
+.page nav a.nav_6 { background-color: #333366; }
+.page nav a.nav_6:hover { background-color: #000033; }
+.page nav a.nav_7 { background-color: #CC3366; }
+.page nav a.nav_7:hover { background-color: #990066; }*/
+
+.page .page_content{
+  /*background: linear-gradient(#101010, #003333, #339933);*/
+  padding: 55px 0px 1px 0px;
+}
+
+.content h1 {
+  color: #121212;
+  font-size: 1.8em;
+  font-style: italic;
+  border-bottom: 3px solid #353535;
+  padding-bottom: 10px;
+  padding-left: 5px;
+  text-shadow: 1px 1px 2px #808080;
+  -webkit-background-clip: text;
+}
+
+.content {
+    margin: 15px 30px 15px 30px;
+    padding: 10px 20px 10px 20px;
+    border: 1px solid white;
+}
+
+@media (max-width: 860px) {
+  .content {
+    margin: 15px 30px 15px 30px;
+    padding: 10px 20px 10px 20px;
+    border: 1px solid white;
+  }
+}
+
+.content_userRegistration tr td {
+  padding-bottom: 5px;
+}
+
+.content_userRegistration tr td.content_userRegistration_label {
+  text-align: right;
+  padding-right: 10px;
+}
+
+.content_userRegistration tr td.content_userRegistration_buttons {
+  direction: rtl;
+  padding-top: 10px;
+}
+
+.content_userRegistration tr td.content_userRegistration_buttons input{
+  width: 80px;
+}
+
+.page_content_container_left {
+  /*background: linear-gradient(135deg, #d8e0de 0%,#aebfbc 22%,#99afab 33%,#8ea6a2 
+    50%,#829d98 67%,#4e5c5a 82%,#0e0e0e 100%);*/
+  width: 70%;
+  float: left;
+}
+
+
+@media (min-width: 860px) {
+  .page_content_container_right {
+    width: 30%;
+    float: left;
+  }
+}
+
+@media (max-width: 860px) {
+  .page_content_container_right {
+    width: 400px;
+    float: left;
+  }
+}
+.page_content_container_right .content_sidebar {
+    /*margin: 20px 35px 20px 15px;
+    border-top: 5px solid rgba(118, 185, 0, 1);*/
+    margin: 10px 5px 10px 0px;
+    border-top: 5px solid rgba(118, 185, 0, 1);
+}
+
+@media (max-width: 860px) {
+  .page_content_container_right .content_sidebar {
+    margin: 10px 5px 20px 5px;
+    border-top: 5px solid rgba(118, 185, 0, 1);
+  }
+}
+
+.page_content_container_right .content_sidebar h2{
+  padding: 10px;
+  background-color: black;
+  color: #EEE;
+}
+
+.sidebar_content{
+  padding: 10px 10px 20px 10px;
+  border-left: 2px solid;
+  border-right: 2px solid;
+  border-bottom: 2px solid;
+  font-family: Arial;
+}
+
+.sidebar_content .sidebar_content_item h3{
+  color: #121212;
+  padding-bottom: 5px;
+  font-size: 1.1em;
+}
+
+.sidebar_content .sidebar_content_item{
+  padding: 15px 5px;
+}
+
+.page footer {
+  display: block;
+  margin: 0px;
+  padding: 25px 0px 10px 0px;
+  height: 40px;
+  background: linear-gradient( #fff, #000, #000, #000, #000, #000);
+  color: #ccc;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1.15em;
+  /*border-bottom: solid 4px #66CC33;*/
+}
+
+.content .description {
+  border: 1px solid black ;
+  min-height: 500px;
+}
+
+.description .gameImage {
+  width: 600px;
+  height: 200px;
+  height:auto;
+  background-image: url(../images/gameScreen.jpg);
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
+  background-color: #464646;
+  /*display: block;
+  height: 500px;
+  
+  background-size: 400px 500px;
+  background: url(klematis.jpg) repeat;
+  margin: 0px auto;
+  padding: 5px;*/
+}
+
+.gameInfo #matrix {
+  border: solid black 5px;
+  border-collapse: collapse;
+}
+
+#matrix td {
+  text-align: center;
+  /*padding: 10px 20px;*/
+  width: 100px;
+  height: 100px;
+  border: solid black 1px;
+  /*border-collapse: collapse;*/
+}
+
+.clear{
+  clear: both;
+}
