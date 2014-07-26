@@ -8,6 +8,13 @@
 
 require("library.php");
 
+if($_POST) {
+	$username = new Login("username");
+	$password = new Login("password");
+
+	$username->validate();
+	//$logUser->
+}
 
 ?>
 <!DOCTYPE html>
@@ -15,31 +22,36 @@ require("library.php");
 <head>
 	<title> Login Page </title>
 	<meta http-equiv="content-type" content="text/html;charset=UTF-8" />
-	<link rel="stylesheet" href="styles/stylesheet.css" />
+	<link rel="stylesheet" href="styles/style.css" />
 	<script type="text/javascript" src=""></script>
 </head>
 <body>
 	<div class="page">
-		<div class="content">
 			<div class="login">
 				<form action="login.php" method="post">
-					<table>
-						<header>Login</header>
+					<table class="loginTable">
+						<tr>
+							<th colspan="2">
+								Login		
+							</th>
+						</tr>
 						<tr>
 							<td>
 								Username:
 							</td>
 							<td>
-								<input type="email" />
+								<input type="text" name="username" />
 							</td>
+							<?php if($_POST) $username->showFormErrors(); ?>
 						</tr>
 						<tr>
 							<td>
 								Password:
 							</td>
 							<td>
-								<input type="password" />
+								<input type="password" name="password" />
 							</td>
+							<?php if($_POST) $password->showFormErrors(); ?>
 						</tr>
 						<tr>
 							<td>
@@ -52,7 +64,6 @@ require("library.php");
 					</table>
 				</form>
 			</div>
-		</div>
 	</div>
 </body>
 </html>

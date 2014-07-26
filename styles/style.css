@@ -8,7 +8,6 @@
     box-sizing: border-box;
 }
 
-
 img {
     width: auto;
     max-width: 100%;
@@ -81,4 +80,32 @@ table.registration td {
 
 td.error {
     color: red;
+}
+
+
+/* Login Page css styles */
+input {
+    border-radius: 6px;
+    padding: 3px;
+}
+
+.page div.login {
+    margin: 30px auto;
+}
+
+div.login table {
+    margin: 30px auto;
+    border: 2px solid;
+    border-radius: 10px;
+}
+
+div.login table td {
+    padding: 5px;
+
+    /*background-color: blue;*/
+}
+
+div.login table td:first-child {
+    text-align: center;
+    font-weight: bold;
 }

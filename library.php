@@ -132,6 +132,78 @@ class ItemEntry {
             <?php
         }
     }
+
+    // Used for removing dangerous special chars and unecessary spaces form input
+    protected function removeSpecialChars($input) {
+        $input = trim($input);
+        $input = stripslashes($input);
+        $input = htmlspecialchars($input);
+        return $input;
+    }
+}
+
+// class Login
+class Login {
+    private $_formName;
+
+    private $_regEx;
+    private $_error;
+
+    public function __construct($formName) {
+        //if($_POST || $_GET) {
+            // 1. Remove any invalid characters from input
+            //$user = removeSpecialChars($user);
+            //$pass = removeSpecialChars($pass);
+            // Or validate whether _username and _password statisfy requirements
+            $this->_formName = $formName;
+            $this->_regEx = array();
+            $this->setRegex("/(^[0-9a-z!@#$%^&*()]{0,7}$)/i", "cannot have fewer than 8 characters");
+            $this->setRegex("/([^0-9a-z!@#$%^&*()])/i", "cannot contain invalid characters");
+            //print("obj created");
+        //}
+    }
+    public function setRegex($regEx, $errMsg = "", $evalTrue = true) {
+        $validation = ["regEx" => $regEx, "errMsg" => $errMsg];
+        if(!is_array($this->_regEx)) {
+            $this->_regEx = array();
+        }
+        // else {
+            array_push($this->_regEx, $validation);
+            //var_dump($this->_regEx);
+        //}
+    }
+    public function validate() {
+        $invalidChars = array();
+        if(isset($_POST[$this->_formName])) {
+            //var_dump($this->_regEx);
+            foreach($this->_regEx as $validation) {
+                //print($validation["regEx"]);
+                print_r($validation);
+                if(preg_match($validation["regEx"], $_POST[$this->_formName], $invalidChars)) {
+                    //if(count($invalidChars)) {
+                        $this->_error = "$this->_formName " . $validation['errMsg'];
+                    //}
+                }
+            }  
+        }
+        else {
+            //print("form entry is invalid");
+            $this->_error = "Username is required";
+        }
+        if($this->_error != false) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+    public function showFormErrors() {
+        if($this->_error != false) {
+            ?>
+                <td class="error"> <?php echo $this->_error;?></td>
+            <?php
+        }
+    }
 }
 
 // class RadioButton extends ItemEntry
