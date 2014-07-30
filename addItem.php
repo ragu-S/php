@@ -8,15 +8,28 @@
 
 require("library.php");
 
+// $session = new Session();
+// print($_SESSION['LAST_ACTIVITY']);
+// if(!$session->sessionActive()) {
+// }
+
 $html = new html();
 $html->htmlHead();
 $html->htmlBody();
 $form = new FormItemEntry();
 
-if($_POST || $_GET) {
+if($_SERVER["REQUEST_METHOD"] == "POST") {
+	print("CALLING");
+    
     if($form->validateForm()) { 
-        //$data = new dbConnect();
-        //$data->insertItems($_POST);
+    	addError("All validation passed");
+        $data = new DbConnect();
+        print_r($_POST);
+        $query = $data->insertItems($_POST, "inventory");
+        var_dump($query);
+    }
+    else{
+    	addError("Validation failed");
     }
 }
 
@@ -38,7 +51,8 @@ if($_POST || $_GET) {
 				Description:
 			</td>
 			<td>
-				<textarea name="description" value="<?= $form->displayItem('description'); ?>">
+				<textarea name="description">
+					<?= $form->displayItem('description'); ?>
 				</textarea>
 			</td>
 			<?= $form->showFormErrors("description");?>
@@ -66,9 +80,9 @@ if($_POST || $_GET) {
 				Selling price:
 			</td>
 			<td>
-				<input type="text" name="sellingPrice" value="<?= $form->displayItem('sellingPrice'); ?>" />
+				<input type="text" name="price" value="<?= $form->displayItem('price'); ?>" />
 			</td>
-			<?= $form->showFormErrors("sellingPrice");?>
+			<?= $form->showFormErrors("price");?>
 		</tr>
 		<tr>
 			<td>
@@ -93,13 +107,13 @@ if($_POST || $_GET) {
 				On Back Order:
 			</td>
 			<td>
-				<input type="checkbox" name="backOrder" value="1" <?= $form->displayItem('backOrder'); ?> />
+				<input type="checkbox" name="backOrder" <?= $form->displayItem('backOrder'); ?> />
 			</td>
 			<?= $form->showFormErrors("backOrder");?>
 		</tr>
 		<tr>
 			<td>
-				<input type="submit" name="submit"/>
+				<input type="submit" />
 			</td>
 			<td>
 				<input type="reset" value="Clear" />
@@ -108,5 +122,6 @@ if($_POST || $_GET) {
 	</table>
 </form>
 <?php
+displayError();
 $html->htmlFooter();
 ?>

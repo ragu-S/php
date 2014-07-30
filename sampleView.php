@@ -5,33 +5,31 @@ $newDoc = new html();
 
 $data = new dbConnect();
 //$data->openConnection();
-$arrayTable = $data->retrieveRow();
-//print_r($arrayTable);
+$arrayTable = $data->retrieveRow("inventory");
+
+$data->getColumns("inventory");
 $newDoc->htmlHead();
 $newDoc->htmlBody();
 ?>
 
-<!-- <section class="wrapper">
-    <div class="row purple">
-        <div class="column-3 red">1</div>
-        <div class="column-6">2</div>
-        <div class="column-3 red">3</div>
-        <div class="column-3 red">4</div>
-    </div>
-</section> -->
-
+<div class="searchItem">
+    <form action="sampleView.php" method="post">
+        Search in description: 
+        <input type="text" name="searchText" />
+        <input type="submit" value="Search" />
+    </form>
+</div>
 <table class="content_query">
     <tr>
-        <td>id</td>
-        <td>Title</td>
-        <td>First Name</td>
-        <td>Last Name</td>
-        <td>Organization</td>
-        <td>Email</td>
-        <td>Phone</td>
-        <td>Monday</td>
-        <td>Tuesday</td>
-        <td>T-Shirt Size</td>
+        <td>ID</td>
+        <td>Item Name</td>
+        <td>Description</td>
+        <td>Supplier</td>
+        <td>Cost</td>
+        <td>Price</td>
+        <td>Number On Hand</td>
+        <td>Reorder Level</td>
+        <td>Back Order</td>
         <td>Delete/Restore</td>
     </tr>
     <?php
@@ -42,15 +40,21 @@ $newDoc->htmlBody();
             <tr>
             <?php
             foreach($row as $attr => $val) {
-               // print_r($row);
-            ?>
-                <td><?php print($val); ?></td>
-            <?php
+               if($attr == 'deleted') {
+                    $val == 'y' ? $val = "Restore" : $val = "Delete";
+                    ?>
+                    <td>
+                        <a href="delete.php?id=<?php print($row['id']);?>&deleted=<?php print($row['deleted']);?>"><?php print($val) ?></a>
+                    </td>
+                    <?php
+                }
+                else {
+                    ?>
+                    <td><?php print($val); ?></td>
+                    <?php
+                }
             } 
             ?>
-            <td>
-                <a href="delete.php?id=<?php print($row['userId']); ?>"  />Delete
-            </td>
             </tr>
             <?php 
         }

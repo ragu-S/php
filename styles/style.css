@@ -84,7 +84,7 @@ td.error {
 
 
 /* Login Page css styles */
-input {
+table.loginTable tr td input {
     border-radius: 6px;
     padding: 3px;
 }
@@ -101,11 +101,29 @@ div.login table {
 
 div.login table td {
     padding: 5px;
-
-    /*background-color: blue;*/
 }
 
 div.login table td:first-child {
     text-align: center;
-    font-weight: bold;
+    /*font-weight: bold;*/
+}
+
+div.login tr:nth-child(2) {
+    font-weight: normal;
+}
+
+div.login tr:last-child td {
+    padding-left: 25px;
+    padding-right: 25px;
+}
+
+/* Extra Notes */
+div.additionalNotes ul {
+    width: 500px;
+    margin: 50px auto;
+    border: 2px solid red;
+    text-align: center;
+}
+div.additionalNotes ul li {
+    list-style: none;
 }
