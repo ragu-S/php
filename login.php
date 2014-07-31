@@ -7,53 +7,47 @@
  */
 
 require("library.php");
-$messages = array();
+//$messages = array();
 
 $session = new Session();
 
 if($session->sessionActive()) {
-	// Session was active and user had been logged in, thus redirect to main page
-	//header();
+	addError("Session Active");
+	//Session was active and user had been logged in, thus redirect to main page
+	redirect("addItem.php");
 }
 
 if($_POST) {
-	$username = new Login("username");
-	$password = new Login("password");
-
-	// Set validation requirements with regex
-    $username->setRegex("/([^0-9a-z!@#$%^&*()])/i", "cannot contain invalid characters");
-
-	$password->setRegex("/(^[0-9a-z!@#$%^&*()]{0,7}$)/i", "cannot have fewer than 8 characters");
-    $password->setRegex("/([^0-9a-z!@#$%^&*()])/i", "cannot contain invalid characters");
-
+	if(isset($_POST['register'])) {
+		redirect("registerUser.php");
+		//header("Location: registerUser.php");
+	}
+	// Sets validation requirements with regex and creates user information varaibles
+	$login = new Login();
+	
     // Make database connection
 	$data = new dbConnect();
 
-	// Call validation on username and password
-	if($username->validateFormInput() && $password->validateFormInput()) {
-		array_push($messages, "function returns true");
-		print_r($username->authenticate($data));
-		// if($username->authenticate($data)) {
-		// 	array_push($messages, "user authenticated");
-		// 	// store session
-		// 	if($session->sessionActive()) {
-		// 		array_push($messages, "session is being Set");
-		// 		sessionSet($userId, 'user');
-		// 		//$session->sessionSet($userId, 'user');
-		// 		//header("Location: addItem.php");
-		// 	}
-		// }
-		array_push($messages, "header not sent");
+	// Call validation on username field and password field
+	//$userValid = $username->validateFormInput();
+	//$passwordValid = $password->validateFormInput();
+	if($login->validate()) {
+		addError("Validation true");
+		// build query to compare user name and password stored in database
+        if($login->isUserRegistered($data)) {
+        	// method sessionSet(username, role)
+        	// Set session for validated user
+        	Adderror($login->getUser()." | ".$login->getRole());
+        	$session->sessionSet($login->getUser(), $login->getRole());
+        	redirect("login.php");
+        }
+        addError("function had not redirected");
 		// Authentication shld be done outside of class	
 	}
 	else {
-		//array_push($messages, "function had false return");
-		//addError($err, $class = null, $method = null)
 		addError("function had returned false");
 	}
 }
-
-
 
 ?>
 <!DOCTYPE html>
@@ -85,27 +79,27 @@ if($_POST) {
 								Username:
 							</td>
 							<td>
-								<input type="text" name="username" />
+								<input type="text" name="username" value=""/>
 							</td>
-							<?php if($_POST) $username->showFormErrors(); ?>
+							
 						</tr>
 						<tr>
 							<td>
 								Password:
 							</td>
 							<td>
-								<input type="password" name="password" />
+								<input type="password" name="password" value=""/>
 							</td>
-							<?php if($_POST) $password->showFormErrors(); ?>
 						</tr>
 						<tr>
 							<td>
-								<input type="submit" value="Submit" />
+								<input type="submit" name="login" value="Login" />
 							</td>
 							<td>
-								<input type="submit" value="Register"/>
+								<input type="submit" name="register" value="Register"/>
 							</td>
 						</tr>
+						<?php if($_POST) $login->showError(); ?>
 					</table>
 				</form>
 			</div>
@@ -137,9 +131,6 @@ if($_POST) {
 		</ul>
 	</div>
 	<?php
-		foreach($messages as $message) {
-			assertT($message);
-		}
 		displayError();
 	?>
 </body>

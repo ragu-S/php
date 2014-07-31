@@ -102,13 +102,17 @@ class Html {
 
     public function htmlBody() {
         ?>
-        <nav>
-            <ul>
-                <li><a href="addItem.php">Add</a></li>
-                <li><a href="sampleView.php">View All</a></li>
-                
-            </ul>
-        </nav>
+        <div class="menu">
+            <nav>
+                <ul>
+                    <li><a href="addItem.php">Add</a></li>
+                    <li><a href="sampleView.php">View All</a></li>
+                    <!-- <li><a href=""> </a></li> -->
+                    <?php 
+                    ?>
+                </ul>
+            </nav>
+        </div>
         <?php
     }
 
@@ -129,15 +133,27 @@ class Html {
 
 class Menu {
     private $_menuItems;
-
-    public function __construct($menuList) {
-        if(is_array($menuList)) {
-            ;
-        }
-        else {
-            addError("Item not a list", get_class($this), "contruct");
-        }
+    //$menuArray = array();
+    public function __construct() {
+        $this->_menuItems = array(['link' => 'Add',      'path' => 'addItem.php'],
+                                  ['link' => 'View All', 'path' => 'sampleView.php']
+                                             
+        );
+        // ['link' => '',   'path' => '.php']
+        // ['link' => 'login',   'path' => 'login.php']
+        // ['link' => 'Logout',   'path' => 'logout.php']
+        // 
     }   
+    public function addView() {
+        foreach($this->_menuItems as $item) {
+                ?>
+                <li><a href="<?php echo $item['path']; ?>"><?php echo $item['link'];?></a></li>    
+                <?php
+        }
+    }
+    public function searchBox() {
+
+    }
 }
 
 /**
@@ -263,88 +279,111 @@ class ItemEntry {
  */
 
 class Login {
-    private $_formName;
-    private $_regEx;
+    private $_username;
+    private $_password;
+    private $_role;
+    private $_passwordHint;
+    private $_regExUser;
+    private $_regExPassword;
     private $_error;
-    private $_validFormValue;
-    private $formValid;
+    private $_formValid;
     
-    public function __construct($formName) {
-        // 1. validate whether _username and _password statisfy the requirements
-        $this->_formName = $formName;
-        $this->_regEx = array();
-        $this->setRegex("/(^[0-9a-z!@#$%^&*()]{0,7}$)/i", "cannot have fewer than 8 characters");
-        $this->setRegex("/([^0-9a-z!@#$%^&*()])/i", "cannot contain invalid characters");
-        $this->formValid = true;
+    public function __construct() {        
+        //and _password statisfy the requirements
+        //$this->_formName = $formName;
+        $this->_regExUser = "/(^[0-9a-z]+@[a-z]+\.[a-z]+$)/i";
+        $this->_regExPassword = "/(^\s*$)|(^[0-9a-z!@#$%^&*()]{1,8}$)|([^0-9a-z!@#$%^&*()])/i";
+        
+        $this->_formValid = false;
     }
-
-    public function setRegex($regEx, $errMsg = "", $evalTrue = true) {
-        // Set up a validation rule based on regex, as well as message to display
-        $validation = ["regEx" => $regEx, "errMsg" => $errMsg];
-
-        // Check if we have defined _regEx property as 
-        if(!is_array($this->_regEx)) {
-            $this->_regEx = array();
-        }
-
-        // push validation rule into _regEx property
-        array_push($this->_regEx, $validation);
+    public function getUser() {
+        return $this->_username;
     }
+    public function getRole() {
+        return $this->_role;
+    }
+    public function validate() {
+        if(isset($_POST['username']) && isset($_POST['password'])) {
+            // Set form valid to true since we are performing blacklist checking, ie. looking for invalid input
+            $this->_formValid = true;
 
-    public function validateFormInput($encrypt = false) {
-        $invalidChars = array();
-        if(isset($_POST[$this->_formName]) && !strlen($_POST[$this->_formName])) {
-            foreach($this->_regEx as $validation) {
-                if(preg_match($validation["regEx"], $_POST[$this->_formName], $invalidChars)) {
-                    $this->_error = "This field " . $validation['errMsg'];
-                    $this->formValid = false;
-                }
+            if(!preg_match($this->_regExUser, $_POST['username']) && preg_match($this->_regExPassword, $_POST['password'])) {
+                $this->_formValid = false;
+                $this->_error = "Invalid username or password";
             }
-            // Remove special characters if they exist (as a precaution)
-            $this->_validFormValue = removeSpecialChars($_POST[$this->_formName]);
             
-            // encrypt password
-            if($encrypt) {
-                // $1$1p0rHF1b$    
-                $this->_validFormValue = crypt($_POST[$this->_formName], "$1$1p0rHF1b$");
+            if($this->_formValid) {
+                // Remove special characters if they exist (as a precaution)
+                $this->_username = removeSpecialChars($_POST['username']);
+                $this->_password = removeSpecialChars($_POST['password']);
+
+                // encrypt password with salt $1$1p0rHF1b$    
+                $this->_password = crypt($_POST['password'], "$1$1p0rHF1b$");   
             }
         }
         else {
-            $this->_error = "$this->_formName is required";
-            $this->formValid = false;
+            $this->_error = "Username or password cannot be empty";
+            $this->_formValid = false;
         }
-
-        return $this->formValid;
+        
+        return $this->_formValid;
     }
-
-    public function authenticate($database) {
-        $registered = array();
-        if(isset($this->_validFormValue)) {
-            // build query to compare user name and password stored in database
-            $query = "SELECT username, password, role FROM gamesite.userlogin".
-                     " WHERE username LIKE '" . $this->_validFormValue . "'";
-            
-            $queryRow = $database->retrieveRow("userlogin", $query);
-            print(count($queryRow));
-
-            if(count($queryRow)) {
-                return $queryRow;
-            }
-            else {
-                return false;
-            }
-        }
-        else {
-            array_push($ERROR_MSGS, "Error with ");
-        }
-    }
-
-    public function showFormErrors() {
-        if($this->_error != false) {
+    public function showError() {
+        if($_POST && !$this->_formValid && $this->_error != false) {
             ?>
-                <td class="error"> <?php echo $this->_error;?></td>
+            <tr>
+                <td class="error" colspan="2">
+                    <?php echo $this->_error; ?> 
+                </td>
+            </tr>
             <?php
         }
+    }
+    public function isUserRegistered($database) {
+        if($database->authenticate($this->_username, $this->_password)) {
+            addError("Username and password are already taken");
+            $this->_error = "Username and password are already taken";
+            $this->_formValid = false;
+        }
+        else {
+            $this->_formValid = true;
+        }
+        return !$this->_formValid;
+    }
+    public function registerUser($database) {
+        $registered = false;
+        var_dump($_POST);
+        // if Role and password hint had been given, sanitize the input and store as values
+        if(isset($_POST['passwordHint'])) {
+            if(!preg_match("/^[a-z0-9]+$/i", $_POST['passwordHint'])) {
+                if($this->_formValid) {
+                    $this->_error = "Password hint is required";
+                }
+                $this->_formValid = false;
+            }
+            else {
+                $this->_role = $_POST['role'];
+                $this->_passwordHint = removeSpecialChars($_POST['passwordHint']);
+                $this->_formValid = true;
+            }
+
+        }
+//'boyczuk@senecacollege.ca',  hallgkdls,'$1$1p0rHF1b$iDaVRxMxTTk8qIF8baTw21'       
+        if($this->_formValid) {
+            if(!$this->isUserRegistered($database)) {
+                addError("Inserting to user table");
+                $query = "INSERT INTO gamesite.userlogin".
+                         "(username, password, role, passwordHint)".
+                         " VALUES('$this->_username', '$this->_password', '$this->_role', '$this->_passwordHint')";
+            
+                $registered = $database->insertUser("userlogin", $query);
+            }
+            else {
+                $registered = false;
+            }
+        }
+        
+        return $registered;
     }
 }
 
@@ -407,7 +446,6 @@ class CheckBox extends ItemEntry {
         $this->_valid = true;
     }
     public function validate() {
-        
         if(!isset($_POST[$this->_name])) {
             $_POST[$this->_name] = "n";
             // Check if we are required to validate this checkbox field
@@ -500,7 +538,7 @@ class FormItemEntry {
     private $backOrder;
 
     // a flag to tell us if form had been validated
-    private $formValid;
+    private $_formValid;
 
     public function __construct() {
         // ItemEntry(<input field name>, <validate>, <positive validate>)
@@ -512,7 +550,7 @@ class FormItemEntry {
         $this->description = new TextArea("description", true, false);
 
         $this->supplierCode = new ItemEntry("supplierCode", true, true);
-        $this->supplierCode->setRegEx("/(^[a-z0-9\-\s]+)$/i");
+        $this->supplierCode->setRegEx("/^[a-z0-9\-\s]+$/i");
 
         $this->cost = new ItemEntry("cost", true, true);
         $this->cost->setRegEx("/(^[0-9]+(\.[0-9]{2}|[0-9]*)$)/i");
@@ -546,7 +584,7 @@ class FormItemEntry {
             echo $this->$formName->displayItem($formName, $value);
     }
     public function validateForm() { // make sure u have for GET when implementing headers
-        $this->formValid = 0;
+        $this->_formValid = 0;
 
         if($_SERVER["REQUEST_METHOD"] == "POST") { // or better $_SERVER["REQUEST_METHOD"] == "POST"
             if(isset($_POST['submit'])) {
@@ -554,31 +592,31 @@ class FormItemEntry {
             }
             foreach($_POST as $key=>$value) {     
                 if(!$this->$key->validate()) {
-                    $this->formValid++;
+                    $this->_formValid++;
                     // addError("FormName: ".$key." Value: ".$value);            
                 }     
             }
-            addError("is form valid before Checkboxes?: " . $this->formValid);
+            addError("is form valid before Checkboxes?: " . $this->_formValid);
             // Validate Checkboxes
             if(!$this->backOrder->validate()) {
-                $this->formValid++;
+                $this->_formValid++;
             }
-            addError("is form valid AFTER ?: " . $this->formValid);
+            addError("is form valid AFTER ?: " . $this->_formValid);
             // Set deleted to no for initial entry
             $_POST['deleted'] = "n"; 
 
         }
         var_dump($_POST);
         
-        print($this->formValid);
-        return ($this->formValid > 0) ? false : true;
+        print($this->_formValid);
+        return ($this->_formValid > 0) ? false : true;
     }
     public function showFormErrors($formName) {
         echo $this->$formName->showFormErrors();
     }
     public function storeValues() {
         // Primary purpose for this class method is to input values into the userFormClassMain class
-        // if($this->formValid) {
+        // if($this->_formValid) {
         //     $this->formElement = array();
         //     if($_POST) {
         //         foreach($_POST as $key=>$value) {     
@@ -605,47 +643,57 @@ class DbConnect {
         $authenticate = null;
         //if(flock($fp, LOCK_EX) && 
         if($authenticate = file("./topsecret.txt")) {
-            $error = false;
-            //preg_match("/(?<=: ).*$/i", $connectionInfo);
+
+            $DB_HOST = $authenticate[0];
+            $this->DB_NAME = $authenticate[3];
+            $DB_USERNAME = $authenticate[1];
+            $DB_PASSWORD = $authenticate[2];
+            $DB_PORT = "3306";
+
+                          // PDO(localhost, database, username, password)
+            $this->pdo = new PDO("mysql:host=localhost;dbname=gamesite", "root");
+            $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+            $this->pdo->exec('set session sql_mode = traditional');
+            $this->pdo->exec('set session innodb_strict_mode = on');
         }
         else {
-            echo ("unable to open topsecret file for connection");
-            //error_log("unable to open topsecret file for connection", 0);
+            addError("Unable to open topsecret file for connection", get_class($this), "retrieveAllRows");
             $authenticate = null;
         }
-        
-        $DB_HOST = $authenticate[0];
-        $this->DB_NAME = $authenticate[3];
-        $DB_USERNAME = $authenticate[1];
-        $DB_PASSWORD = $authenticate[2];
-        $DB_PORT = "3306";
-
-                      // PDO(localhost, database, username, password)
-        $this->pdo = new PDO("mysql:host=localhost;dbname=gamesite", "root");
-        $this->pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $this->pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-        $this->pdo->exec('set session sql_mode = traditional');
-        $this->pdo->exec('set session innodb_strict_mode = on');
     }
 
     public function retrieveRow($tablename, $query = null) {
         try {
             if($query == null) {
-
                 $query = "SELECT * FROM $this->DB_NAME.$tablename";
             }
-            $arryTable = array();
+            addError("QUery is ".$query);
             $stmt = $this->pdo->prepare($query);
             $stmt->execute();
-            while($row = $stmt->fetch()) {
-                array_push($arryTable, $row);
-            } 
-            return $arryTable;
+
+            return $stmt->fetch();
         }
         catch(PDOException $e) {
-            die(htmlspecialchars($e->getMessage()));
+            die(addError($e->getMessage(), get_class($this), "retrieveRow"));
         }
     }
+    public function retrieveAllRows($tablename, $query = null) {
+        try {
+            if($query == null) {
+                $query = "SELECT * FROM $this->DB_NAME.$tablename";
+            }
+            
+            $stmt = $this->pdo->prepare($query);
+            $result = $stmt->execute();
+            addError("Result is $result");
+            return ($result > 0) ? $stmt->fetchAll() : !!$result;
+        }
+        catch(PDOException $e) {
+            die(addError($e->getMessage(), get_class($this), "retrieveAllRows"));
+        }
+    }
+
     public function getColumns($tablename) {
         try {
             $stmt = $this->pdo->prepare("DESCRIBE $this->DB_NAME.$tablename");
@@ -653,17 +701,23 @@ class DbConnect {
             return $stmt->fetchAll(PDO::FETCH_COLUMN);
         }
         catch(PDOException $e) {
-            die(htmlspecialchars($e->getMessage()));
+            die(addError($e->getMessage(), get_class($this), "getColumns"));
         }
     }
-    public function insertItems($inputArray, $tablename, $insertQuery = null) {
-        $columns = "";
-        $colVals = "";
 
+    public function authenticate($username, $password) {
+        $query = "SELECT username, password, role FROM gamesite.userlogin".
+                     " WHERE username = '" . $username . "'".
+                     " AND password = '". $password. "'";
+            
+        $queryResult = $this->retrieveRow("userlogin", $query);
+           
+        return isset($queryResult['username']);    
+    }
+
+    public function insertItems($inputArray, $tablename, $insertQuery = null) {
+        $colVals = "";
         if($insertQuery == null)   {
-            // $insertQuery = "INSERT INTO $this->DB_NAME.$tablename".
-            //                "(title, firstName, lastName, organization, email, phone, monday, tuesday, tShirt)".
-            //                "VALUES (:title, :firstName, :lastName, :organization, :email, :phone, :monday, :tuesday, :tShirt)"; 
             $insertQuery = "INSERT INTO $this->DB_NAME.$tablename".
                            "(itemName, description, supplierCode, cost, price, onHand, reorderPoint, backOrder, deleted) "; 
             
@@ -673,7 +727,7 @@ class DbConnect {
             $insertQuery .= "VALUES(";
             $insertQuery .= substr($colVals, 0, strlen($colVals)-1);
             $insertQuery .= ")";
-            print($insertQuery);
+            
         }
         $insert = $this->pdo->prepare($insertQuery);
         if(count($inputArray)) {
@@ -681,11 +735,28 @@ class DbConnect {
             // foreach($inputArry as $key=>$value) {
             //     trim($inputArry[$key]);
             // }
-            //print_r($inputArry);  
-            $insert->execute($inputArray);
+            //print_r($inputArry);
+            try {
+                $insert->execute($inputArray);
+            }  
+            catch(PDOException $e) {
+                die(addError($e->getMessage(), get_class($this), "insertItems"));
+            }
         }
         else {
-            echo "error in insertion command";
+            addError("POST array was empty ", get_class($this), "insertItems");
+        }
+    }
+    public function insertUser($tablename, $query) {
+        try {
+            $insert = $this->pdo->prepare($query);
+            //return ($insert->execute() === 0) ? false : true;
+            $result = $insert->execute();
+            addError("Insert User yields ".$result);
+            return !!$result;
+        }
+        catch(PDOException $e) {
+            die(addError($e->getMessage(), get_class($this), "insertUserss"));
         }
     }
     public function selectItems($itemId, $tablename, $selectQuery = null) {
@@ -701,7 +772,7 @@ class DbConnect {
             $alterFlag->execute();
         }
         catch(PDOException $e) {
-            echo htmlspecialchars($e->getMessage());
+            die(addError($e->getMessage(), get_class($this), "deleteItem"));
         }
     }
     public function __destruct() {
@@ -715,46 +786,69 @@ class Session {
 
     public function __construct() {
         // session_name('userRegister');
-        // session_start();
+        addError("session starting");
+        session_start();
+        addError($_SESSION['last_activity']);
+        addError(session_name());
     }
     public function sessionSet($userId, $role) {
+        $fingerprint = md5($_SERVER['REMOTE_ADDR'].$_SERVER['HTTP_USER_AGENT']);
+        //session_start();
         $_SESSION['valid_user'] = $userId;
         $_SESSION['role'] = $role;
-        $_SESSION['LAST_ACTIVITY'] = time();
+        $_SESSION['last_activity'] = time();
+        $_SESSION['fingerprint'] = $fingerprint;
     }
     public function logOut() {
-        session_unset();
-        session_destroy();   
+        // session_unset();
+        addError("Logging out");
+        if(isset($_SESSION['last_activity']) || isset($_SESSION['fingerprint'])) {
+            addError("SESSION destruction");
+            
+            //unset($_SESSION['valid_user']); //(isset($_SESSION['valid_user']) && 
+            //unset($_SESSION['role']); //(isset($_SESSION['role']) && 
+            //unset($_SESSION['last_activity']); //(isset($_SESSION['last_activity']) && 
+            //unset($_SESSION['fingerprint']); //(isset($_SESSION['fingerprint']) && 
+            
+            setcookie(session_name(), '', time()-61200,'/');
+            session_destroy();  
+            unset($_SESSION);
+        }
+    }
+    private function unsetSession() {
+        unset($_SESSION['valid_user']); //(isset($_SESSION['valid_user']) && 
+        unset($_SESSION['role']); //(isset($_SESSION['role']) && 
+        unset($_SESSION['last_activity']); //(isset($_SESSION['last_activity']) && 
+        unset($_SESSION['fingerprint']); //(isset($_SESSION['fingerprint']) && 
     }
     public function sessionActive() {
-        if(isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > 1800)) {
-            session_unset();
-            session_destroy();
-            return false;
+        addError("CHecking session activity");
+        $fingerprint = md5($_SERVER['REMOTE_ADDR'].$_SERVER['HTTP_USER_AGENT']);
+        if(!isset($_SESSION['last_activity'])) {
+        //   session_start();
+        }
+        //session_start();
+        if($_SESSION['last_activity']) {
+            addError("Session fingerprint ". $_SESSION['last_activity'] . " and " . $fingerprint);
+        }
+        
+        if((isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > 1800)) 
+        || (isset($_SESSION['fingerprint']) && $_SESSION['fingerprint'] == $fingerprint)
+        ) {
+            session_regenerate_id();
+            $_SESSION['last_activity'] = time();
+            $_SESSION['fingerprint'] = $fingerprint;
+            addError("**** SESSION REFRESHED ****");
+            return true;
         }
         else {
-            $_SESSION['LAST_ACTIVITY'] = time();
-            return true;
+            addError("Session destroyed");
+            $this->logOut();
+            return false;
         }
     }
     public function __destruct() {
     }
-}
-
-function resetSession() {
-    $timeout = 60 * 30;
-    $fingerprint = md5($_SERVER['REMOTE_ADDR'].$_SERVER['HTTP_USER_AGENT']);
-    session_start();
-    if((isset($_SESSION['last_active']) && $_SESSION['last_active'] < (time()-$timeout)) 
-        || (isset($_SESSION['fingerprint']) && $_SESSION['fingerprint'] != $fingerprint)
-        || isset($_GET['logout'])
-    ) {
-        setcookie(session_name(), '', time()-3600,'/');
-        session_destroy();
-    }
-    session_regenerate_id();
-    $_SESSION['last_active'] = time();
-    $_SESSION['fingerprint'] = $fingerprint;
 }
 
 function checkSession() {
@@ -775,19 +869,19 @@ function sessionSet($userId, $role) {
 }
 
 function checkSSL() {
-    if($_SERVER['https'] != "on") {
+    if($_SERVER[REQUEST_SCHEME] == "http") {
         $serverUri = "https://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
-        header("HTTP/1.1 301 Moved Permanently");
-        header("Location:".$serverUri);
+        //header("HTTP/1.1 301 Moved Permanently");
+        header("Location: ".$serverUri);
         exit();
     }
 }
 
-function redirectToLogin() {
+function redirect($location) {
     $serverUri = substr($_SERVER['REQUEST_URI'], 0, strrpos($_SERVER['REQUEST_URI'], "/"));
-    $serverUri = $_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']."/login.php"; // add https request
-    header("HTTP/1.1 301 Moved Permanently");
-    header("Location:".$serverUri);
+    $serverUri = $serverUri."/$location"; // add https request
+    
+    header("Location: ".$serverUri);
     exit();
 }
 ?>

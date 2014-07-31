@@ -127,3 +127,21 @@ div.additionalNotes ul {
 div.additionalNotes ul li {
     list-style: none;
 }
+
+/* Menu Styles */
+div.menu nav {
+    margin: 10px;
+    border: 2px solid black;
+}
+
+/*div.menu {
+    margin: 10px;
+    border: 2px solid black;
+}*/
+
+div.menu nav ul li {
+    position: relative;
+    /*float: left;*/
+    /*margin-left: 50px;*/
+    /*clear: both;*/
+}
