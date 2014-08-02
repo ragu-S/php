@@ -8,28 +8,29 @@
 
 require("library.php");
 
-$session = new Session();
-if(!$session->sessionActive()) {
-	// User was not logged or was timed out, redirect to login
-	addError("Session is not Active");
+// $session = new Session();
+// if(!$session->sessionActive()) {
+// 	// User was not logged or was timed out, redirect to login
+// 	addError("Session is not Active");
 	
-	//redirect("login.php");
-}
+// 	redirect("login.php");
+// }
 
 $html = new html();
 $menu = new Menu();
 $html->htmlHead();
 $html->htmlBody();
 $form = new FormItemEntry();
-
+$data = new DbConnect();
 if($_SERVER["REQUEST_METHOD"] == "POST") {
 	print("CALLING");
     
     if($form->validateForm()) { 
     	addError("All validation passed");
         $data = new DbConnect();
-        print_r($_POST);
-        $query = $data->insertItems($_POST, "inventory");
+        //print_r($_POST);
+        //$query = $data->insertItems($_POST, "inventory");
+        $query = $data->insert("inventory", $_POST, "id");
         var_dump($query);
     }
     else{

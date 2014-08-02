@@ -4,7 +4,7 @@ require_once("library.php");
 $session = new Session();
 //checkSSL();
 //print_r($_SERVER);
-$session->sessionSet("ragu", "dev");
+//$session->sessionSet("ragu", "dev");
 $html = new html();
 $menu = new Menu();
 $html->htmlHead();

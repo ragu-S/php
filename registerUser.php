@@ -5,6 +5,7 @@
 
 	if($session->sessionActive()) {
 		addError("Session Active USER LOGGED IN");
+		redirect("sampleView.php");
 		//$session->logOut();
 		//Session was active and user had been logged in, thus redirect to main page
 		//header();
@@ -12,13 +13,13 @@
 	else {
 		addError("**************** Logout *********************");
 		// Send user to login page again
-		// redirect("login.php");
+		//redirect("login.php");
 	}
 ?>
 <!DOCTYPE html>
 <html>
 <head>
-	<title> Login Page </title>
+	<title> Register </title>
 	<meta http-equiv="content-type" content="text/html;charset=UTF-8" />
 	<link rel="stylesheet" href="styles/style.css" />
 	<script type="text/javascript" src=""></script>
@@ -27,15 +28,15 @@
 if($_POST) {
 	$register = new Login();
 	$data = new dbConnect();
-	$register->validate();
-	$register->registerUser($data);
-	// if($register->validate()) {
-
-	// 	addError("Validation true");
-	// }
-	// else {
-	// 	addError("function had returned false");
-	// }
+	if($register->loginValidate()) {
+		addError("FORM IS VALID");
+	}
+	
+	if($register->registerUser($data)) {
+		addError("Validation true");
+		redirect("login.php");
+	}
+	
 }
 
 ?>
@@ -45,7 +46,7 @@ if($_POST) {
 		<form action="registerUser.php" method="post">
 			<table>
 				<tr>
-		            <td>Email address:</td>
+		            <td>Username (Enter email address):</td>
 		            <td><input name="username" type="text" value=""></td>   
 		        </tr>
 		        <tr>
@@ -74,7 +75,7 @@ if($_POST) {
 		            <td><input name="" type="submit" value="Submit"></td>
 		            <td><input name="" type="reset" value="Clear"></td>
 		        </tr>
-		        <?php if($_POST) $register->showError(); ?>
+		        <?php if($_POST) $register->showFormErrors(); ?>
 			</table>
 		</form>
 	</div>	

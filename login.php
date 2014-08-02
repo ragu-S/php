@@ -31,17 +31,20 @@ if($_POST) {
 	// Call validation on username field and password field
 	//$userValid = $username->validateFormInput();
 	//$passwordValid = $password->validateFormInput();
-	if($login->validate()) {
+	if($login->loginValidate()) {
 		addError("Validation true");
+		$session->sessionSet($_POST, $data);
+		$session->logout();
+		//redirect("addItem.php");
 		// build query to compare user name and password stored in database
-        if($login->isUserRegistered($data)) {
-        	// method sessionSet(username, role)
-        	// Set session for validated user
-        	Adderror($login->getUser()." | ".$login->getRole());
-        	$session->sessionSet($login->getUser(), $login->getRole());
-        	redirect("login.php");
-        }
-        addError("function had not redirected");
+        // if($login->isUserRegistered($data)) {
+        // 	// method sessionSet(username, role)
+        // 	// Set session for validated user
+        // 	Adderror($login->getUser()." | ".$login->getRole());
+        // 	$session->sessionSet($login->getUser(), $login->getRole());
+        // 	redirect("login.php");
+        // }
+        // addError("function had not redirected");
 		// Authentication shld be done outside of class	
 	}
 	else {
@@ -99,7 +102,7 @@ if($_POST) {
 								<input type="submit" name="register" value="Register"/>
 							</td>
 						</tr>
-						<?php if($_POST) $login->showError(); ?>
+						<?php if($_POST) $login->showFormErrors(); ?>
 					</table>
 				</form>
 			</div>
