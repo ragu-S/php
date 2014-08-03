@@ -1,54 +1,54 @@
 <?php
 
 require("library.php");
-$newDoc = new html();
+
+$session = new Session();
+
+if(!$session->sessionActive()) {
+    // User was not logged or was timed out, redirect to login
+    addError("Session is not Active");
+    
+    redirect("login.php");
+}
+
+$html = new html();
+$menu = new Menu();
+$html->htmlHead();
+$menu->displayMenu();
+
 $data = new dbConnect();
 $search = new searchItem();
 
 $arrayTable = array();
 $message;
-$sort = null;
+$sort = getPreviousSearch();
 
-function setSearchCookie($item = null) {
-    $month = time() + (3600 * 24 * 30);
-    if($item != null) {
-        $success = setcookie("search", $item, $month);
-    }
-}
-
-function getSearchCookie() {
-    if(isset($_COOKIE['search'])) {
-        return $_COOKIE['search'];
-    }
-    else {
-        return null;
-    }
-}
 
 if(isset($_GET['sort'])) {
-    print_r($data->getColumns("inventory"));
-    //$sort = getSearchCookie();
-    $sort = $_GET['sort'];
+    $tableColumns = $data->getColumns("inventory");
+    if(isset($tableColumns[$_GET['sort']])) {
+        $sort = $tableColumns[$_GET['sort']];
+    }
+    setSearchCookie($sort);
 }
+
 //$data->insert("userlogin",array("fg"));
 
 if(isset($_POST['searchText'])) {
     var_dump($_POST);
-    //if() {
-        if($search->validate()) { 
-            $arrayTable = $search->search($data, $sort);   
-        }
-        elseif(preg_match("/^\s*$/i",$_POST['searchText'])) {
-            // blank search, show all  
-            $arrayTable = $data->retrieveAll("inventory" , $sort);
-            // sort
-            //$search->sortTable($sort,$data);      
-        }
-        //}
+    if($search->validate()) { 
+        $arrayTable = $search->search($data, $sort);   
+    }
+    elseif(preg_match("/^\s*$/i",$_POST['searchText'])) {
+        // blank search, show all  
+        $arrayTable = $data->retrieveAll("inventory" , array('sort' => $sort));
+        // sort
+        //$search->sortTable($sort,$data);      
+    }
 }
 else {
     print("No form submit");
-    $arrayTable = $data->retrieveAll("inventory", $sort);
+    $arrayTable = $data->retrieveAll("inventory", array('sort' => $sort));
 }
 
 // Sorting functionality
@@ -59,29 +59,20 @@ else {
 //$data->openConnection();
 
 $data->getColumns("inventory");
-$newDoc->htmlHead();
-$newDoc->htmlBody();
-?>
 
-<div class="searchItem">
-    <form action="sampleView.php" method="post">
-        Search in description: 
-        <input type="text" name="searchText" value="<?php if(isset($_POST['searchText'])) toHtml($_POST['searchText']);?>" />
-        <input type="submit" value="Search" />
-    </form>
-</div>
+?>
 <table class="content_query">
     <tr>
-        <td><a href="sampleView.php?sort=0;?>">ID</a></td>
-        <td><a href="sampleView.php?sort=1;?>">Item Name</a></td>
-        <td><a href="sampleView.php?sort=2;?>">Description</a></td>
-        <td><a href="sampleView.php?sort=3;?>">Supplier</a></td>
-        <td><a href="sampleView.php?sort=4;?>">Cost</a></td>
-        <td><a href="sampleView.php?sort=5;?>">Price</a></td>
-        <td><a href="sampleView.php?sort=6;?>">Number On Hand</a></td>
-        <td><a href="sampleView.php?sort=7;?>">Reorder Level</a></td>
-        <td><a href="sampleView.php?sort=8;?>">Back Order</a></td>
-        <td><a href="sampleView.php?sort=9;?>">Delete/Restore</a></td>
+        <td><a href="sampleView.php?sort=0">ID</a></td>
+        <td><a href="sampleView.php?sort=1">Item Name</a></td>
+        <td><a href="sampleView.php?sort=2">Description</a></td>
+        <td><a href="sampleView.php?sort=3">Supplier</a></td>
+        <td><a href="sampleView.php?sort=4">Cost</a></td>
+        <td><a href="sampleView.php?sort=5">Price</a></td>
+        <td><a href="sampleView.php?sort=6">Number On Hand</a></td>
+        <td><a href="sampleView.php?sort=7">Reorder Level</a></td>
+        <td><a href="sampleView.php?sort=8">Back Order</a></td>
+        <td><a href="sampleView.php?sort=9">Delete/Restore</a></td>
     </tr>
     <?php
     if(count($arrayTable) > 1) { 
@@ -126,9 +117,6 @@ $newDoc->htmlBody();
     }
     ?>
 </table>
-
 <?php
 displayError();
-$newDoc->htmlFooter();
-
 ?>

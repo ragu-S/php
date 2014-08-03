@@ -104,23 +104,7 @@ class Html {
 
     public function htmlBody() {
         ?>
-        <div class="menu">
-            <nav>
-                <ul>
-                    <li><a href="addItem.php">Add</a></li>
-                    <li><a href="sampleView.php">View All</a></li>
-                    <!-- <li><a href=""> </a></li> -->
-                    <?php 
-                    ?>
-                </ul>
-            </nav>
-            <!-- <div class="search">
-                <form>
-                    Search Item <input type="text">
-                    <input type="submit" name="search" value="search">        
-                </form>
-            </div> -->
-        </div>
+        
         <?php
     }
 
@@ -153,14 +137,55 @@ class Menu {
         // 
     }   
     public function addView() {
-        foreach($this->_menuItems as $item) {
-                ?>
-                <li><a href="<?php echo $item['path']; ?>"><?php echo $item['link'];?></a></li>    
-                <?php
-        }
+        ?>
+        <nav>
+            <ul>
+            <?php    
+                foreach($this->_menuItems as $item) {
+                    ?>
+                    <li><a href="<?php toHtml($item['path']); ?>"><?php toHtml($item['link']);?></a></li>    
+                    <?php
+                }
+        ?>
+        </ul>
+        </nav>
+        <?php
     }
     public function searchBox() {
-
+        ?>
+            <div class="searchItem">
+                <form action="sampleView.php" method="post">
+                    Search in description: 
+                    <input type="text" name="searchText" value="<?php if(isset($_POST['searchText'])) toHtml($_POST['searchText']);?>" />
+                    <input type="submit" value="Search" />
+                </form>
+            </div>
+        <?php
+    }
+    public function userLogInfo() {
+        if(isset($_SESSION['valid_user']) && isset($_SESSION['role'])) {
+            ?>
+                <ul class="currentUser">
+                    <li><?php toHtml($_SESSION['valid_user']); ?></li>
+                    <li><?php toHtml($_SESSION['role']); ?></li>
+                    <li><a href="logout.php">Log Out</a></li>    
+                </ul>
+            <?php
+        }
+    }
+    public function displayMenu($view = false) {
+        print_r($_SESSION);
+        ?>
+        <div class="menu">
+            <?php
+            $this->addView();
+            if($view) {
+                $this->searchBox();
+            } 
+            $this->userLogInfo();
+            ?>
+        </div>
+        <?php
     }
 }
 
@@ -275,7 +300,7 @@ class ItemEntry {
     public function showFormErrors() {
         if($_POST && !$this->_valid) {
             ?>
-                <td class="error"> <?php toHtml($this->getError());?></td>
+                <td class="error"> <?php toHtml($this->getError()); ?></td>
             <?php
         }
     }
@@ -309,28 +334,12 @@ class Login {
 
         $this->_formValid = false;
     }
-    
-    // public function getPassword() {
-    //     return $this->_password;
-    // }
-
-    // public function getUser() {
-    //     return $this->_username;
-    // }
-
-    // public function getRole() {
-    //     return $this->_role;
-    // }
 
     public function loginValidate() {
         // Set form valid to 0, then count number of errors, form invalid if error count > 0
         $this->_formValid = false;
 
         if(isset($_POST['username']) && isset($_POST['password'])) {
-            // if(!preg_match($this->_regExUser, $_POST['username']) && preg_match($this->_regExPassword, $_POST['password'])) {
-            //     $this->_formValid = false;
-            //     $this->_error = "Invalid username or password";
-            // }
             print_r($_POST);
             if($this->_username->validate() && $this->_password->validate()) {
                 $this->_formValid = true;
@@ -507,7 +516,7 @@ class CheckBox extends ItemEntry {
     public function showFormErrors() {
         if(isset($_POST[$this->_name]) && !$this->_valid) {
             ?>
-                <td class="error"> <?php echo $this->_error;?></td>
+                <td class="error"> <?php toHtml($this->_error); ?></td>
             <?php
         }
     }
@@ -589,6 +598,7 @@ class FormItemEntry {
     // attributes of form Item Entry class
 
     // Text Input fields
+    private $itemId;
     private $itemName; 
     private $description; 
     private $supplierCode; 
@@ -602,9 +612,8 @@ class FormItemEntry {
     private $_formValid;
 
     public function __construct() {
-        // ItemEntry(<input field name>, <validate>, <positive validate>)
-
         //Text Field
+        $this->itemId = new ItemEntry("itemId", false, false)
         $this->itemName = new ItemEntry("itemName", true, false);
         
         // Text Area
@@ -635,14 +644,14 @@ class FormItemEntry {
 
     public function addOption($item) {
         foreach($item as $entry)
-            echo makeTag($entry, "option");
+            toHtml(makeTag($entry, "option"));
     }
 
     public function displayItem($formName, $value = null) {
         if($value === null)
-            echo $this->$formName->displayItem($formName);
+            toHtml($this->$formName->displayItem($formName));
         else
-            echo $this->$formName->displayItem($formName, $value);
+            toHtml($this->$formName->displayItem($formName, $value));
     }
 
     public function validateForm() { // make sure u have for GET when implementing headers
@@ -675,7 +684,7 @@ class FormItemEntry {
     }
 
     public function showFormErrors($formName) {
-        echo $this->$formName->showFormErrors();
+        toHtml($this->$formName->showFormErrors());
     }
     
     function __destruct() {
@@ -739,7 +748,7 @@ class DbConnect {
             // if WHERE clause is to be included, retrieve values from $columns
             // AND comparison is set by default
             // if false, simply SELECT * from table
-            print_r($columns);
+            
             foreach($columns as $colName => $value) {
                 $cols .= "$colName, ";
                 $criteria .= "$colName = :$colName AND ";
@@ -771,16 +780,33 @@ class DbConnect {
             // foreach($sortarray as $key => $value) {
             //     $sortarray[$key] = $this->pdo->quote($sortarray[$key]);
             // }
-            if($query === null) {
+            if($query === null && isset($sortarray['sort'])) {
                 $query = "SELECT * FROM $this->DB_NAME.$tablename".//where description LIKE ?";//$tablename
-                        " ORDER BY $sortItem DESC";
+                         " ORDER BY ". $sortarray['sort'] ." DESC";
             }
             print_r($sortarray);
             print($query);
             $stmt = $this->pdo->prepare($query);
-            $result = $stmt->execute($sortarray);
+            $result = isset($sortarray['sort']) ? $stmt->execute() : $stmt->execute($sortarray);
             
             return $result ? $stmt->fetchAll() : $result;
+        }
+        catch(PDOException $e) {
+            die(addError($e->getMessage(), get_class($this), "retrieveAllRows"));
+        }
+    }
+
+    public function retrieveSpecial($query, $queryArray) {
+        try {
+            $result = false;
+            if(is_array($queryArray)) {
+                $stmt = $this->pdo->prepare($query);
+                $result =  $stmt->execute($queryArray);
+            }
+            else {
+                throw new Exception("Prepared statement will require an array");
+            }
+            return $result;
         }
         catch(PDOException $e) {
             die(addError($e->getMessage(), get_class($this), "retrieveAllRows"));
@@ -878,7 +904,7 @@ class Session {
         $queryKeys = $_POST;//array('username' => $postValues['username']);
                            
         $userInfo = $database->retrieve("userlogin", $queryKeys, true);
-        
+        print_r($userInfo);
         $_SESSION['valid_user'] = $userInfo['username'];
         $_SESSION['role'] = $userInfo['role'];
         $_SESSION['last_activity'] = time();
@@ -900,7 +926,7 @@ class Session {
     public function sessionActive() {
         addError("Checking session activity");
         $fingerprint = md5($_SERVER['REMOTE_ADDR'].$_SERVER['HTTP_USER_AGENT']);
-        
+        print($_SESSION['last_activity']);
         if(isset($_SESSION['last_activity'])) {
             addError("Session fingerprint ". $_SESSION['last_activity'] . " and " . $fingerprint);
         }
@@ -957,6 +983,24 @@ function redirect($location) {
     
     header("Location: ".$serverUri);
     exit();
+}
+
+
+function setSearchCookie($item) {
+    $month = time() + (3600 * 24 * 30);
+    //if($item != null) {
+    $success = setcookie("search", $item, $month);
+    //}
+}
+
+function getPreviousSearch() {
+    addError("CALLING return Cookie value " . isset($_COOKIE['search']));
+    if(isset($_COOKIE['search'])) {
+        return $_COOKIE['search'];
+    }
+    else {
+        return "id";
+    }
 }
 
 function toHtml($string) {

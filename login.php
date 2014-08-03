@@ -34,8 +34,8 @@ if($_POST) {
 	if($login->loginValidate()) {
 		addError("Validation true");
 		$session->sessionSet($_POST, $data);
-		$session->logout();
-		//redirect("addItem.php");
+		//$session->logout();
+		redirect("addItem.php");
 		// build query to compare user name and password stored in database
         // if($login->isUserRegistered($data)) {
         // 	// method sessionSet(username, role)

@@ -15,5 +15,4 @@ if(!$session->sessionActive()) {
 
 $session->logOut();
 redirect("login.php");
-
 ?>

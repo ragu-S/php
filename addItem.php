@@ -8,27 +8,43 @@
 
 require("library.php");
 
-// $session = new Session();
-// if(!$session->sessionActive()) {
-// 	// User was not logged or was timed out, redirect to login
-// 	addError("Session is not Active");
+$session = new Session();
+
+if(!$session->sessionActive()) {
+	// User was not logged or was timed out, redirect to login
+	addError("Session is not Active");
 	
-// 	redirect("login.php");
-// }
+	redirect("login.php");
+}
 
 $html = new html();
 $menu = new Menu();
 $html->htmlHead();
-$html->htmlBody();
+$menu->displayMenu();
 $form = new FormItemEntry();
 $data = new DbConnect();
-if($_SERVER["REQUEST_METHOD"] == "POST") {
-	print("CALLING");
-    
+
+if(isset($_GET['id'])) {
+	// retrieve item record from database
+	$query = "SELECT * FROM gamesite.inventory
+			 WHERE id = ?";
+	$_GET['id'] = removeSpecialChars($_GET['id']);
+	//retrieveAll
+	$record = $data->retrieveSpecial($query, array($_GET['id']));
+	
+	if($record) {
+		$_POST = $record;	
+	}
+	$form->validateForm();
+	// add item Id field
+		
+	// repopulate with existing item's values 
+}
+elseif($_SERVER["REQUEST_METHOD"] == "POST") {
     if($form->validateForm()) { 
     	addError("All validation passed");
         $data = new DbConnect();
-        //print_r($_POST);
+
         //$query = $data->insertItems($_POST, "inventory");
         $query = $data->insert("inventory", $_POST, "id");
         var_dump($query);
@@ -36,6 +52,10 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
     else{
     	addError("Validation failed");
     }
+}
+
+function modifyItem() {
+	
 }
 
 ?>
