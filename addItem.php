@@ -25,17 +25,19 @@ $form = new FormItemEntry();
 $data = new DbConnect();
 
 if(isset($_GET['id'])) {
+	addError("MODIFY CALL THROUGH GET ".$_GET['id']);
 	// retrieve item record from database
-	$query = "SELECT * FROM gamesite.inventory
-			 WHERE id = ?";
+	$query = "SELECT * FROM gamesite.inventory".
+			 " WHERE id = ?";//.$_GET['id'];
+//			 SELECT * FROM gamesite.inventory WHERE id = 0000000001
 	$_GET['id'] = removeSpecialChars($_GET['id']);
 	//retrieveAll
 	$record = $data->retrieveSpecial($query, array($_GET['id']));
-	
+	//print_r($data->retrieveSpecial($query, array($_GET['id'])));
 	if($record) {
 		$_POST = $record;	
 	}
-	$form->validateForm();
+	//$form->validateForm();
 	// add item Id field
 		
 	// repopulate with existing item's values 
@@ -54,9 +56,9 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
-function modifyItem() {
+// function modifyItem() {
 	
-}
+// }
 
 ?>
 

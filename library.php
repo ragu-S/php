@@ -613,7 +613,7 @@ class FormItemEntry {
 
     public function __construct() {
         //Text Field
-        $this->itemId = new ItemEntry("itemId", false, false)
+        $this->itemId = new ItemEntry("itemId", false, false);
         $this->itemName = new ItemEntry("itemName", true, false);
         
         // Text Area
@@ -799,6 +799,7 @@ class DbConnect {
     public function retrieveSpecial($query, $queryArray) {
         try {
             $result = false;
+            addError("retrieveSpecial");
             if(is_array($queryArray)) {
                 $stmt = $this->pdo->prepare($query);
                 $result =  $stmt->execute($queryArray);
@@ -806,7 +807,9 @@ class DbConnect {
             else {
                 throw new Exception("Prepared statement will require an array");
             }
-            return $result;
+            print_r($query);
+            print_r($stmt->fetch());
+            return $result ? $stmt->fetch() : $result;
         }
         catch(PDOException $e) {
             die(addError($e->getMessage(), get_class($this), "retrieveAllRows"));
