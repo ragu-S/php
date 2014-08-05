@@ -156,7 +156,7 @@ class Menu {
             <div class="searchItem">
                 <form action="sampleView.php" method="post">
                     Search in description: 
-                    <input type="text" name="searchText" value="<?php if(isset($_POST['searchText'])) toHtml($_POST['searchText']);?>" />
+                    <input type="text" name="searchText" value="<?php if(isset($_POST['searchText'])) toHtml($_POST['searchText']); elseif(isset($_SESSION['searchTerm']) && isset($_GET['sort'])) toHtml($_SESSION['searchTerm']); ?>" />
                     <input type="submit" value="Search" />
                 </form>
             </div>
@@ -212,13 +212,14 @@ class ItemEntry {
     protected $_valid;
     protected $_validateField;
     protected $_whitelist;
+    protected $_modify;
 
     public function __construct($name, $validate, $whitelistValidation = false) {
         if(is_string($name)) {
             $this->_name = $name;
         }
 
-        addError("constructor called", $this->_name, "contruct");
+        //addError("constructor called", $this->_name, "contruct");
         // default textfield regEx
         
         $this->_whitelist = $whitelistValidation;
@@ -226,6 +227,7 @@ class ItemEntry {
         $this->_error = "Invalid Entry: this field ";
         $this->_validateField = $validate;        
         $this->_valid = false;
+        $this->_modify = false;
     }
 
     public function getItem($itemName) {
@@ -239,7 +241,12 @@ class ItemEntry {
     public function getError() {
         return $this->_error;
     }
-
+    public function makeModifiable() {
+        print($this->_name);
+        $this->_modify = true;
+        $this->_valid = true;
+        $this->_error = null;
+    }
     /**
      * Default flag for this form field is set to false, i.e. invalid, set true only after validation checks are passed
      * @param  string $formValue form input from user
@@ -291,7 +298,7 @@ class ItemEntry {
 
     // Used for form-repopulation
     public function displayItem() {
-        if(isset($_POST[$this->_name]) && !$this->_valid) {
+        if((isset($_POST[$this->_name]) && !$this->_valid) || $this->_modify) {
             return $_POST[$this->_name];
         }
     }
@@ -490,6 +497,7 @@ class SelectField extends ItemEntry {
 // class CheckBox extends ItemEntry
 class CheckBox extends ItemEntry {
     public function __construct($name, $validate){
+        ItemEntry::__construct($name, $validate, false);
         if(is_string($name)) {
             $this->_name = $name;
         }
@@ -499,16 +507,10 @@ class CheckBox extends ItemEntry {
     }
 
     public function validate() {
-        if(!isset($_POST[$this->_name])) {
-            $_POST[$this->_name] = "n";
-            // Check if we are required to validate this checkbox field
-            if($this->_validateField) {
-                $this->_valid = false;
-            }
+        if(isset($_POST[$this->_name])) {
+            $_POST[$this->_name] = "y";   
         }
-        else {
-            $_POST[$this->_name] = "y";    
-        }
+        $this->_valid = true;
         addError("Checkbox Validation END ".$this->_valid);
         return $this->_valid;
     }
@@ -522,7 +524,7 @@ class CheckBox extends ItemEntry {
     }
 
     public function displayItem() {
-        if(isset($_POST[$this->_name]) && !$this->_valid) {
+        if((isset($_POST[$this->_name]) && !$this->_valid) || $this->_modify) {
             return "checked";
         }
     }
@@ -546,24 +548,29 @@ class TextArea extends ItemEntry {
     // }
 }
 
-class SearchItem extends ItemEntry {
+class SearchItem {
+    private $_searchTerm;
+    private $_regEx;
+    private $_valid;
+
     public function __construct() {
-        ItemEntry::__construct("searchText", true);
+        //ItemEntry::__construct("searchText", true);
+        $this->_searchTerm = "an item"; 
         $this->_regEx = "/([^a-z0-9\.\,\'\"\- \s])/i";
+        $this->_valid = false;
     }
 
-    public function validate() {
+    public function validate($searchTerm) {
         /**
          * This function validates the Search term for invalid characters based on the Textarea field validation
          */  
-        //print_r($_POST);
-        addError("Search Validate Called" . $this->_valid);
-        //print($this->_valid);
-        if(isset($_POST['searchText']) && ItemEntry::validate($_POST['searchText'])) {
+        print($searchTerm);
+        if(!preg_match($this->_regEx, $searchTerm)) {
             // Sanitize input value for illegal characters
-            $_POST['searchText'] = stripslashes($_POST['searchText']);
-            $this->_value = $_POST['searchText'];
-            addError($_POST['searchText']);
+            $searchTerm = stripslashes($searchTerm);
+            $this->_searchTerm = $searchTerm;
+            addError($searchTerm);
+            $this->_valid = true;
         }
         else {
             $this->_error = "Search entry invalid";
@@ -574,23 +581,23 @@ class SearchItem extends ItemEntry {
     }
 
     public function search($database, $sortItem = "id") {
-        print($database->getDbName());
         $db = $database->getDbName();
-
+        print($this->_searchTerm);
+        print($sortItem);
         $query = "SELECT * FROM $db.inventory". 
                  " WHERE description LIKE :description".
-                 " ORDER BY :sort";
+                 " ORDER BY $sortItem ASC";
         
-        //$item = '"%'.$this->_value.'%"';
+        //$item = '"%'.$this->_searchTerm.'%"';
         
-        $matches = $database->retrieveAll("inventory", array('description' => "%$this->_value%", 'sort' => $sortItem), $query);
+        $matches = $database->retrieveAll("inventory", array(':description' => "%$this->_searchTerm%"), $query);
         //$matches = $database->retrieveAll("inventory", arr, $query);
         //print($matches);
         return $matches;
     }
 
-    public function sortTable($database, $sortItem) {
-
+    public function getSearchTerm() {
+        return $this->_searchTerm; 
     }
 }
 
@@ -613,7 +620,7 @@ class FormItemEntry {
 
     public function __construct() {
         //Text Field
-        $this->itemId = new ItemEntry("itemId", false, false);
+        $this->id = new ItemEntry("id", false, false);
         $this->itemName = new ItemEntry("itemName", true, false);
         
         // Text Area
@@ -630,11 +637,13 @@ class FormItemEntry {
 
         $this->onHand = new ItemEntry("onHand", true, false);
         $this->onHand->setRegEx("/[^0-9]/");
-        $this->reorder = new ItemEntry("reorder", true, false);
-        $this->reorder->setRegEx("/[^0-9]/");
+        $this->reorderPoint = new ItemEntry("reorderPoint", true, false);
+        $this->reorderPoint->setRegEx("/[^0-9]/");
 
         //Checkboxes
-        $this->backOrder = new CheckBox("backOrder", false);
+        $this->backOrder = new CheckBox("backOrder", false, false);
+
+        $this->_formValid = false;
     }
     public function makeFormElement($name, $regEx = null) {
         $formItem = new ItemEntry($name);
@@ -654,14 +663,39 @@ class FormItemEntry {
             toHtml($this->$formName->displayItem($formName, $value));
     }
 
-    public function validateForm() { // make sure u have for GET when implementing headers
+    public function validateForm($modify = false) { // make sure u have for GET when implementing headers
         $this->_formValid = 0;
+        
+        if(isset($_POST['submit'])) {
+                unset($_POST['submit']);
+        }
 
-        if($_SERVER["REQUEST_METHOD"] == "POST") { // or better $_SERVER["REQUEST_METHOD"] == "POST"
-            if(isset($_POST['submit'])) {
+        // Set backOrder checkbox to no if there is no POST submission of checkbox(ie. was unchecked) 
+        if(!isset($_POST['backOrder'])) {
+            $_POST['backOrder'] = "n";
+        }
+        if($modify) {
+            if(isset($_POST['deleted'])) {
+                unset($_POST['deleted']);
+            }
+            addError("VALIDATE form called"); 
+            print_r($_POST); 
+            //unset($_POST['backOrder']);  
+            foreach($_POST as $key=>$value) {
+                $this->$key->makeModifiable();     
+            }
+            $this->_formValid = 0;
+        }
+        elseif($_SERVER["REQUEST_METHOD"] == "POST") { // or better $_SERVER["REQUEST_METHOD"] == "POST"
+            if(isset($_POST['submit'])) { 
                 unset($_POST['submit']);
             }
+            // if(isset($_POST['backOrder'])) { 
+            //     unset($_POST['id']); 
+            // }
+            //print_r($_POST);
             foreach($_POST as $key=>$value) {     
+                print($key);
                 if(!$this->$key->validate()) {
                     $this->_formValid++;
                     // addError("FormName: ".$key." Value: ".$value);            
@@ -669,17 +703,16 @@ class FormItemEntry {
             }
             addError("is form valid before Checkboxes?: " . $this->_formValid);
             // Validate Checkboxes
-            if(!$this->backOrder->validate()) {
-                $this->_formValid++;
-            }
+            // if(!$this->backOrder->validate()) {
+            //     $this->_formValid++;
+            // }
             addError("is form valid AFTER ?: " . $this->_formValid);
             // Set deleted to no for initial entry
             $_POST['deleted'] = "n"; 
-
         }
-        var_dump($_POST);
+        //var_dump($_POST);
         
-        print($this->_formValid);
+        //print($this->_formValid);
         return ($this->_formValid > 0) ? false : true;
     }
 
@@ -776,19 +809,21 @@ class DbConnect {
     public function retrieveAll($tablename, $sortarray, $query = null){//, $sortItem = "id") {
         try {
             $sort = null;
-            //$sortItem = removeSpecialChars($sortItem);
-            // foreach($sortarray as $key => $value) {
-            //     $sortarray[$key] = $this->pdo->quote($sortarray[$key]);
-            // }
+            $result = false;
+
             if($query === null && isset($sortarray['sort'])) {
                 $query = "SELECT * FROM $this->DB_NAME.$tablename".//where description LIKE ?";//$tablename
                          " ORDER BY ". $sortarray['sort'] ." DESC";
+                $stmt = $this->pdo->prepare($query);
+                $result = $stmt->execute();
+            }
+            else {
+                $stmt = $this->pdo->prepare($query);
+                $result = $stmt->execute($sortarray);
             }
             print_r($sortarray);
             print($query);
-            $stmt = $this->pdo->prepare($query);
-            $result = isset($sortarray['sort']) ? $stmt->execute() : $stmt->execute($sortarray);
-            
+
             return $result ? $stmt->fetchAll() : $result;
         }
         catch(PDOException $e) {
@@ -796,7 +831,7 @@ class DbConnect {
         }
     }
 
-    public function retrieveSpecial($query, $queryArray) {
+    public function retrieveSpecial($query, $queryArray = null) {
         try {
             $result = false;
             addError("retrieveSpecial");
@@ -804,11 +839,9 @@ class DbConnect {
                 $stmt = $this->pdo->prepare($query);
                 $result =  $stmt->execute($queryArray);
             }
-            else {
-                throw new Exception("Prepared statement will require an array");
-            }
-            print_r($query);
-            print_r($stmt->fetch());
+            
+            // print_r($query);
+            // print_r($stmt->fetch());
             return $result ? $stmt->fetch() : $result;
         }
         catch(PDOException $e) {
@@ -836,6 +869,8 @@ class DbConnect {
                 $tableCols = "";
                 $placeHolders = "";
 
+
+                print_r($columns);
                 // We wish to remove an autoincremented primary key
                 if($ignorePK != null && (array_search($ignorePK, $columns)) !== false) {
                     array_shift($columns); 
@@ -875,6 +910,20 @@ class DbConnect {
             die();
         }
 
+    }
+
+    public function update($items, $query) {
+        try {
+            foreach($items as $item) {
+                trim($item);
+            }
+            $stmt = $this->pdo->prepare($query);
+            return $stmt->execute($items);
+        }
+        catch(PDOException $e) {
+            addError($e->getMessage(), get_class($this), "deleteItem");
+            die();
+        }
     }
 
     public function deleteItem($itemId, $tablename, $changeVal) {

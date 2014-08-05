@@ -37,7 +37,8 @@ if(isset($_GET['id'])) {
 	if($record) {
 		$_POST = $record;	
 	}
-	//$form->validateForm();
+
+	$form->validateForm(true);
 	// add item Id field
 		
 	// repopulate with existing item's values 
@@ -48,8 +49,27 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST") {
         $data = new DbConnect();
 
         //$query = $data->insertItems($_POST, "inventory");
-        $query = $data->insert("inventory", $_POST, "id");
-        var_dump($query);
+        
+		if(isset($_POST['id'])) {
+			$db = $data->getDbName();
+			$cols = $data->getColumns("inventory");
+			
+			$setClause = "SET ";
+			$id = array_shift($_POST);
+			array_shift($cols);
+			foreach($cols as $colName) {
+				$setClause .= "$colName = :$colName,";
+			}
+			$setClause = substr($setClause, 0, strrpos($setClause, ","));
+			$query = "UPDATE $db.inventory ".
+                     $setClause.
+                     " WHERE id = $id";
+			print($query);
+			$data->update($_POST, $query);
+		}
+		else {
+			$data->insert("inventory", $_POST, "id");
+		}
     }
     else{
     	addError("Validation failed");
@@ -64,6 +84,21 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <form action="addItem.php" method="post">
 	<table name="itemEntry" class="itemEntry">
+		<?php
+			if(isset($_GET['id'])) {
+		?>
+		<tr>
+			<td>
+				Item Id:
+			</td>
+			<td>
+				<input type="text" name="id" value="<?= $form->displayItem('id'); ?>" readonly="readonly" />
+			</td>
+			
+		</tr>
+		<?php
+		}
+		?>
 		<tr>
 			<td>
 				Item Name:
@@ -125,9 +160,9 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST") {
 				Reorder Point:
 			</td>
 			<td>
-				<input type="text" name="reorder" value="<?= $form->displayItem('reorder'); ?>" />
+				<input type="text" name="reorderPoint" value="<?= $form->displayItem('reorderPoint'); ?>" />
 			</td>
-			<?= $form->showFormErrors("reorder");?>			
+			<?= $form->showFormErrors("reorderPoint");?>			
 		</tr>
 		<tr>
 			<td>
