@@ -10,19 +10,19 @@ if(!$session->sessionActive()) {
     
     redirect("login.php");
 }
-
-$html = new html();
-$menu = new Menu();
-$html->htmlHead();
-$menu->displayMenu();
-
-$data = new dbConnect();
-$search = new searchItem();
+addError("CURRENT COOKIE ".$_COOKIE['search']);
 
 $arrayTable = array();
 $message;
 $sort = getPreviousSearch();
 
+$data = new dbConnect();
+$search = new searchItem();
+
+$html = new html();
+$menu = new Menu();
+$html->htmlHead();
+$menu->displayMenu("view");
 
 if(isset($_GET['sort'])) {
     $tableColumns = $data->getColumns("inventory");
@@ -33,21 +33,33 @@ if(isset($_GET['sort'])) {
 }
 
 //$data->insert("userlogin",array("fg"));
-
+print("SORT is ".$sort);
 if(isset($_POST['searchText'])) {
-    var_dump($_POST);
-    if($search->validate()) { 
-        $arrayTable = $search->search($data, $sort);   
+    //var_dump($_POST);
+    if($search->validate($_POST['searchText'])) { 
+        addError("VALID search key");
+        $_SESSION['searchTerm'] = $search->getSearchTerm();
+        $arrayTable = $search->search($data, $sort); 
     }
     elseif(preg_match("/^\s*$/i",$_POST['searchText'])) {
+        addError("Empty search key");
         // blank search, show all  
         $arrayTable = $data->retrieveAll("inventory" , array('sort' => $sort));
         // sort
         //$search->sortTable($sort,$data);      
     }
 }
+elseif(isset($_SESSION['searchTerm']) && isset($_GET['sort'])) {
+    addError("Previous SEARCH from SESSION variable");
+    if($search->validate($_SESSION['searchTerm'])) {
+        $arrayTable = $search->search($data, $sort);    
+    }
+}
 else {
     print("No form submit");
+    if(isset($_SESSION['searchTerm'])) {
+        unset($_SESSION['searchTerm']);
+    }
     $arrayTable = $data->retrieveAll("inventory", array('sort' => $sort));
 }
 
