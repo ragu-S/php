@@ -8,7 +8,8 @@
 
 require("library.php");
 //$messages = array();
-
+?>
+<?php
 $session = new Session();
 
 if($session->sessionActive()) {
@@ -29,22 +30,14 @@ if($_POST) {
 	$data = new dbConnect();
 
 	// Call validation on username field and password field
-	//$userValid = $username->validateFormInput();
-	//$passwordValid = $password->validateFormInput();
 	if($login->loginValidate()) {
 		addError("Validation true");
 		$session->sessionSet($_POST, $data);
-		//$session->logout();
+
 		redirect("addItem.php");
+
 		// build query to compare user name and password stored in database
-        // if($login->isUserRegistered($data)) {
-        // 	// method sessionSet(username, role)
-        // 	// Set session for validated user
-        // 	Adderror($login->getUser()." | ".$login->getRole());
-        // 	$session->sessionSet($login->getUser(), $login->getRole());
-        // 	redirect("login.php");
-        // }
-        // addError("function had not redirected");
+        
 		// Authentication shld be done outside of class	
 	}
 	else {
@@ -100,6 +93,11 @@ if($_POST) {
 							</td>
 							<td>
 								<input type="submit" name="register" value="Register"/>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								<a href="email.php">Forgot your password?</a>
 							</td>
 						</tr>
 						<?php if($_POST) $login->showFormErrors(); ?>

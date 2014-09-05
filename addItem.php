@@ -29,8 +29,9 @@ if(isset($_GET['id'])) {
 	// retrieve item record from database
 	$query = "SELECT * FROM gamesite.inventory".
 			 " WHERE id = ?";//.$_GET['id'];
-//			 SELECT * FROM gamesite.inventory WHERE id = 0000000001
+
 	$_GET['id'] = removeSpecialChars($_GET['id']);
+
 	//retrieveAll
 	$record = $data->retrieveSpecial($query, array($_GET['id']));
 	//print_r($data->retrieveSpecial($query, array($_GET['id'])));
@@ -45,29 +46,36 @@ if(isset($_GET['id'])) {
 }
 elseif($_SERVER["REQUEST_METHOD"] == "POST") {
     if($form->validateForm()) { 
-    	addError("All validation passed");
         $data = new DbConnect();
-
-        //$query = $data->insertItems($_POST, "inventory");
         
 		if(isset($_POST['id'])) {
 			$db = $data->getDbName();
 			$cols = $data->getColumns("inventory");
 			
+			// Begin the set clause for our Update statement
 			$setClause = "SET ";
+
+			// Take id key and its value from POST array, to use for prepared statement
 			$id = array_shift($_POST);
+			// Remove the id column from array containing the column names
 			array_shift($cols);
+
 			foreach($cols as $colName) {
 				$setClause .= "$colName = :$colName,";
 			}
+			
 			$setClause = substr($setClause, 0, strrpos($setClause, ","));
+			
+			// prepare statement does ont seem to accept placeholders inside WHERE clause
+			// we had to clean POSTed id value and 
 			$query = "UPDATE $db.inventory ".
                      $setClause.
                      " WHERE id = $id";
-			print($query);
+			//print($query);
 			$data->update($_POST, $query);
 		}
 		else {
+			// we wish to enter a new item into the database
 			$data->insert("inventory", $_POST, "id");
 		}
     }
@@ -169,7 +177,7 @@ elseif($_SERVER["REQUEST_METHOD"] == "POST") {
 				On Back Order:
 			</td>
 			<td>
-				<input type="checkbox" name="backOrder" <?= $form->displayItem('backOrder'); ?> />
+				<input type="checkbox" name="backOrder" value="y" <?= $form->displayItem('backOrder'); ?> />
 			</td>
 			<?= $form->showFormErrors("backOrder");?>
 		</tr>

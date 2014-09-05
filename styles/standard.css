@@ -1,0 +1,49 @@
+/* Main CSS */
+
+@charset "UTF-08";
+
+body {
+	margin: 0px;
+	padding: 0px;
+	font-size: 14px;
+	font-family: Arial;
+	background-color: #000;
+}
+
+.page {
+	font-size: 1em;
+	margin: 0px auto;
+	max-width: 1200px;
+	height: 600px;
+	
+	background-color: #FFF; 
+}
+
+.page header {
+	margin: 20px auto;
+	text-align: center;
+}
+
+.page header a.logo {
+
+}
+
+nav {
+
+}
+
+.page .content {
+	border: 2px solid;
+}
+
+.email {
+	border: 2px solid;
+	width: 500px;
+	height: 500px;
+	padding: 50px 150px;
+	margin: 0px auto;
+}
+
+/*.email input {
+	margin: 50px auto;
+}*/

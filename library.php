@@ -23,18 +23,12 @@
  *  @link http://<need a web hoster still!>
  */
 
-
-// }}}
-// {{{ GLOBALS
-
 /**
  * Global error message array to keep track of development runtime errors
  * @global array $GLOBALS['ERROR_MSGS']
  */
 $GLOBALS['ERROR_MSGS'] = array();
 
-// }}}
-// {{{ addError()
 
 /**
  * Adds error messages to $GLOBALS['ERROR_MSGS'] along with error number, location of error call
@@ -54,8 +48,6 @@ function addError($err, $class = null, $method = null) {
     // assertNotEmpty(actual, 'message');
 }
 
-//}}}
-//{{{
 
 /**
  * Displays error by accessing the global array key and outputting each error to console log
@@ -97,6 +89,7 @@ class Html {
             <script>
             </script>
             <link href="./styles/style.css" rel="stylesheet">
+            <!-- <link rel="stylesheet" type="text/css" href="./styles/standard.css"> -->
         </head>
         <body>
         <?php
@@ -162,6 +155,7 @@ class Menu {
             </div>
         <?php
     }
+
     public function userLogInfo() {
         if(isset($_SESSION['valid_user']) && isset($_SESSION['role'])) {
             ?>
@@ -173,8 +167,9 @@ class Menu {
             <?php
         }
     }
+
     public function displayMenu($view = false) {
-        print_r($_SESSION);
+        //print_r($_SESSION);
         ?>
         <div class="menu">
             <?php
@@ -214,24 +209,30 @@ class ItemEntry {
     protected $_whitelist;
     protected $_modify;
 
-    public function __construct($name, $validate, $whitelistValidation = false) {
-        if(is_string($name)) {
-            $this->_name = $name;
-        }
-
-        //addError("constructor called", $this->_name, "contruct");
+    public function __construct($name, $validate) {
+        $this->_name = $name;
         // default textfield regEx
-        
-        $this->_whitelist = $whitelistValidation;
         $this->_regEx = "/(^\s*$)|([^a-z\-;\:\,\'0-9\s])/i";
         $this->_error = "Invalid Entry: this field ";
         $this->_validateField = $validate;        
         $this->_valid = false;
         $this->_modify = false;
+        $this->_validationArray = array(['regex' => "/^\s*$/", 'errorMsg' => "Invalid Entry: cannot be blank", 'whitelist' => false]); 
+        // will validate based on array entries: ['validate' => "/([^a-z\-;\:\,\'0-9\s])/i", 'errorMsg' => "Invalid Entry: this field cannot have the following characeter"];
+        //$this->_validationArray = array(['regex' => "/([^a-z\-;\:\,\'0-9\s])/i", 'errorMsg' => "Invalid Entry: this field cannot have the following character", 'whitelist' => false]);
+        //array_push($this->_validationArray, 
     }
 
     public function getItem($itemName) {
         return $this->$itemName;
+    }
+
+    public function unsetValidation() {
+        unset($this->_validationArray);
+        $this->_validationArray = array();
+    }
+    public function setValidation($regEx, $errMsg, $whitelist) {
+        array_push($this->_validationArray, ['regex' =>$regEx, 'errorMsg' => $errMsg, 'whitelist' => $whitelist]);
     }
 
     public function setRegEx($regEx) {
@@ -247,13 +248,57 @@ class ItemEntry {
         $this->_valid = true;
         $this->_error = null;
     }
+
+    public function validate() {
+        if($this->_validateField && isset($_POST[$this->_name])) {
+            $entryErrFlag = false;
+            
+            // going through each individual validation check from our array of validations needed to perform
+            for($n = 0; $n < count($this->_validationArray) && !$entryErrFlag; $n++) {
+                $validation = $this->_validationArray[$n];
+                
+                // perform whitelist validation if whitelist flag is set, ie. check only for correct input entries
+                if($validation['whitelist']) { 
+                    if(preg_match($validation['regex'], $_POST[$this->_name])) {
+                       // Form entry is VALID
+                        $this->_error = false;
+                        $this->_valid = true; 
+                    }
+                    else {
+                        // store the appropriate error message inside object property, to display to user when showFormErrors() method is called
+                        $this->_error = $validation['errorMsg'];
+                        $entryErrFlag = true;
+                    }
+                }
+                else {
+                    // perform blacklist validation, ie. check for bad entries only
+                    if(preg_match($validation['regex'], $_POST[$this->_name])) {
+                        // store the appropriate error message inside object property, to display to user when showFormErrors() method is called
+                        $this->_error = $validation['errorMsg'];
+                        $entryErrFlag = true;
+                    }
+                    else {
+                        // Form entry is VALID
+                        $this->_error = false;
+                        $this->_valid = true; 
+                    }
+                }       
+            }
+        }
+        elseif(!$this->_validateField) {
+            $this->_valid = true;
+        }
+        
+        return $this->_valid;
+    }
+
     /**
      * Default flag for this form field is set to false, i.e. invalid, set true only after validation checks are passed
      * @param  string $formValue form input from user
      * @return bool if form valid return true
      */
     
-    public function validate() { 
+    public function validate1() { 
         // Used to store invalid characters user entered from form field
         $invalidChars = array();
         // Check if we need to validate this field first
@@ -293,6 +338,7 @@ class ItemEntry {
         elseif(!$this->_validateField) {
             $this->_valid = true;
         }
+
         return $this->_valid;
     }
 
@@ -344,10 +390,8 @@ class Login {
 
     public function loginValidate() {
         // Set form valid to 0, then count number of errors, form invalid if error count > 0
-        $this->_formValid = false;
-
         if(isset($_POST['username']) && isset($_POST['password'])) {
-            print_r($_POST);
+            
             if($this->_username->validate() && $this->_password->validate()) {
                 $this->_formValid = true;
             }
@@ -424,15 +468,17 @@ class Login {
         if($this->_formValid) {
             if(!$this->isUserRegistered($database)) {
                 addError("Inserting to user table");
+                
                 // $query = "INSERT INTO gamesite.userlogin".
                 //          "(username, password, role, passwordHint)".
                 //          " VALUES(':username', ':password', ':role', ':passwordHint')";
+                
                 $userInfo = array('username'     => $_POST['username'],
                                   'password'     => $_POST['password'],
                                   'role'         => $_POST['role'],
                                   'passwordHint' => $_POST['passwordHint']
                                  );
-                //print_r($_POST);
+                
                 $registered = $database->insert("userlogin", $userInfo);
             }
             else {
@@ -496,6 +542,8 @@ class SelectField extends ItemEntry {
 
 // class CheckBox extends ItemEntry
 class CheckBox extends ItemEntry {
+    private $_checked;
+
     public function __construct($name, $validate){
         ItemEntry::__construct($name, $validate, false);
         if(is_string($name)) {
@@ -504,14 +552,17 @@ class CheckBox extends ItemEntry {
         $this->_validateField = $validate;        
         $this->_error = "This field must be checked";
         $this->_valid = true;
+        $this->_checked = false;
     }
 
     public function validate() {
         if(isset($_POST[$this->_name])) {
-            $_POST[$this->_name] = "y";   
+            $this->_checked = $_POST[$this->_name] == "y";  
         }
+
         $this->_valid = true;
         addError("Checkbox Validation END ".$this->_valid);
+
         return $this->_valid;
     }
 
@@ -524,7 +575,7 @@ class CheckBox extends ItemEntry {
     }
 
     public function displayItem() {
-        if((isset($_POST[$this->_name]) && !$this->_valid) || $this->_modify) {
+        if($this->_checked) { // || $this->_modify) {
             return "checked";
         }
     }
@@ -588,8 +639,6 @@ class SearchItem {
                  " WHERE description LIKE :description".
                  " ORDER BY $sortItem ASC";
         
-        //$item = '"%'.$this->_searchTerm.'%"';
-        
         $matches = $database->retrieveAll("inventory", array(':description' => "%$this->_searchTerm%"), $query);
         //$matches = $database->retrieveAll("inventory", arr, $query);
         //print($matches);
@@ -620,31 +669,38 @@ class FormItemEntry {
 
     public function __construct() {
         //Text Field
-        $this->id = new ItemEntry("id", false, false);
-        $this->itemName = new ItemEntry("itemName", true, false);
+        $this->id = new ItemEntry("id", false);
+        $this->itemName = new ItemEntry("itemName", true);
         
         // Text Area
-        $this->description = new TextArea("description", true, false);
+        $this->description = new TextArea("description", true);
 
-        $this->supplierCode = new ItemEntry("supplierCode", true, true);
-        $this->supplierCode->setRegEx("/^[a-z0-9\-\s]+$/i");
+        $this->supplierCode = new ItemEntry("supplierCode", true);
+        //$this->supplierCode->setRegEx("/^[a-z0-9\-\s]+$/i");
+        $this->supplierCode->setValidation("/^[a-z0-9\-\s]+$/i", "Invalid input, has to be letters or numbers", true);
 
-        $this->cost = new ItemEntry("cost", true, true);
-        $this->cost->setRegEx("/(^[0-9]+(\.[0-9]{2}|[0-9]*)$)/i");
+        $this->cost = new ItemEntry("cost", true);
+        //$this->cost->setRegEx("/(^[0-9]+(\.[0-9]{2}|[0-9]*)$)/i");
+        $this->cost->setValidation("/(^[0-9]+(\.[0-9]{2}|[0-9]*)$)/i", "Invalid input for Cost, has to be dollar value entry", true);
+        
+        $this->price = new ItemEntry("price", true);
+        //$this->price->setRegEx("/(^[0-9]+(\.[0-9]{2}|[0-9]*)$)/i");
+        $this->price->setValidation("/(^[0-9]+(\.[0-9]{2}|[0-9]*)$)/i", "Invalid input for Price, has to be dollar value entry", true);
 
-        $this->price = new ItemEntry("price", true, true);
-        $this->price->setRegEx("/(^[0-9]+(\.[0-9]{2}|[0-9]*)$)/i");
-
-        $this->onHand = new ItemEntry("onHand", true, false);
-        $this->onHand->setRegEx("/[^0-9]/");
-        $this->reorderPoint = new ItemEntry("reorderPoint", true, false);
-        $this->reorderPoint->setRegEx("/[^0-9]/");
+        $this->onHand = new ItemEntry("onHand", true);
+        $this->onHand->setValidation("/[^0-9]/", "Invalid input for On Hand items, has to be numeric entry", false);
+        //$this->onHand->setRegEx("/[^0-9]/");
+        $this->reorderPoint = new ItemEntry("reorderPoint", true);
+        $this->reorderPoint->setValidation("/[^0-9]/", "Invalid input for Reorder amount, has to be numeric entry", false);
+        //$this->reorderPoint->setRegEx("/[^0-9]/");
 
         //Checkboxes
-        $this->backOrder = new CheckBox("backOrder", false, false);
+        $this->backOrder = new CheckBox("backOrder", false);
 
+        // Set newly constructed form valid flag to false, since we haven't called validate method 
         $this->_formValid = false;
     }
+
     public function makeFormElement($name, $regEx = null) {
         $formItem = new ItemEntry($name);
         $formItem->setRegEx($regEx); 
@@ -662,58 +718,57 @@ class FormItemEntry {
         else
             toHtml($this->$formName->displayItem($formName, $value));
     }
-
+ 
     public function validateForm($modify = false) { // make sure u have for GET when implementing headers
-        $this->_formValid = 0;
+        $formInvalidCount = 0;
         
         if(isset($_POST['submit'])) {
-                unset($_POST['submit']);
+            unset($_POST['submit']);
         }
-
         // Set backOrder checkbox to no if there is no POST submission of checkbox(ie. was unchecked) 
         if(!isset($_POST['backOrder'])) {
             $_POST['backOrder'] = "n";
         }
+
+        // user made a modifcation call, where a item entry is to be updated in the database
+        // repopulate the form with this item record for modification
         if($modify) {
             if(isset($_POST['deleted'])) {
                 unset($_POST['deleted']);
             }
             addError("VALIDATE form called"); 
-            print_r($_POST); 
+            //print_r($_POST); 
             //unset($_POST['backOrder']);  
             foreach($_POST as $key=>$value) {
                 $this->$key->makeModifiable();     
             }
-            $this->_formValid = 0;
+            $formInvalidCount = 0;
         }
         elseif($_SERVER["REQUEST_METHOD"] == "POST") { // or better $_SERVER["REQUEST_METHOD"] == "POST"
+            // unset submit entry in POST array
             if(isset($_POST['submit'])) { 
                 unset($_POST['submit']);
             }
-            // if(isset($_POST['backOrder'])) { 
-            //     unset($_POST['id']); 
-            // }
-            //print_r($_POST);
+
+            // Primary validation step, we wish to perform validation on this form class
+            // Go through each item entry and call its validation method
+            // if any item entry is invalid, increment formInvalidCount, 
+            // we keep an incrementing value rather than a boolean flag, because of the following situation
+            // example: if itemName was invalid, but the following form was valid, the flag would be set true (or valid)
+            // validate item name field = false
+            // validate description field = true
+            // thus form would be considered valid, despite 1 entry not being correct
             foreach($_POST as $key=>$value) {     
-                print($key);
                 if(!$this->$key->validate()) {
-                    $this->_formValid++;
-                    // addError("FormName: ".$key." Value: ".$value);            
+                    $formInvalidCount++;            
                 }     
             }
-            addError("is form valid before Checkboxes?: " . $this->_formValid);
-            // Validate Checkboxes
-            // if(!$this->backOrder->validate()) {
-            //     $this->_formValid++;
-            // }
-            addError("is form valid AFTER ?: " . $this->_formValid);
-            // Set deleted to no for initial entry
+            
+            // Set deleted to no for first time entry of an item
             $_POST['deleted'] = "n"; 
         }
-        //var_dump($_POST);
-        
-        //print($this->_formValid);
-        return ($this->_formValid > 0) ? false : true;
+
+        return $formInvalidCount > 0 ? false : true;
     }
 
     public function showFormErrors($formName) {
@@ -723,6 +778,11 @@ class FormItemEntry {
     function __destruct() {
     }
 }
+
+/**
+ * 
+ * 
+ */
 
 class DbConnect {
     private $pdo;
@@ -753,9 +813,19 @@ class DbConnect {
         }
     }
 
+    /**
+     * @access public
+     * @return string the name of connected database
+     */
+
     public function getDbName() {
         return $this->DB_NAME;
     }
+
+    /**
+     * @access public
+     * @return array returns all rows from the queried result
+     */
 
     public function retrieveRow($tablename, $queryItems) {
         try {
@@ -767,10 +837,16 @@ class DbConnect {
             return $result ? $stmt->fetch() : $result;
         }
         catch(PDOException $e) {
-            die(addError($e->getMessage(), get_class($this), "retrieveRow"));
+            throw new Exception("retrieveRow failed to execute correctly: " . $e->getMessage());
+            die();
         }
     }
 
+    /**
+     * @access public
+     * @return array returns a single row from the queried result
+     */
+    
     public function retrieve($tablename, $columns, $selectAll) {
         try {
             $query = "";
@@ -786,13 +862,14 @@ class DbConnect {
                 $cols .= "$colName, ";
                 $criteria .= "$colName = :$colName AND ";
             }
+
             $cols = substr($cols, 0, strrpos($cols,", "));
             $criteria = substr($criteria, 0, strrpos($criteria,"AND "));    
             
             if($selectAll) {
                 $cols = "*";
             }
-            print($criteria);
+
             $query = "SELECT $cols FROM $this->DB_NAME.$tablename WHERE $criteria";
 
             $stmt = $this->pdo->prepare($query);
@@ -801,12 +878,17 @@ class DbConnect {
             return $result ? $stmt->fetch() : false;
         }
         catch(PDOException $e) {
-            throw new Exception("Retrieve method expects two array parameters");
+            throw new Exception("Retrieve method failed to execute: " . $e->getMessage());
             die();
         }
     }
 
-    public function retrieveAll($tablename, $sortarray, $query = null){//, $sortItem = "id") {
+    /**
+    * @access public
+    * @return array returns a single row from the queried result
+    */
+    
+    public function retrieveAll($tablename, $sortarray, $query = null) {//, $sortItem = "id") {
         try {
             $sort = null;
             $result = false;
@@ -821,8 +903,8 @@ class DbConnect {
                 $stmt = $this->pdo->prepare($query);
                 $result = $stmt->execute($sortarray);
             }
-            print_r($sortarray);
-            print($query);
+            // print_r($sortarray);
+            // print($query);
 
             return $result ? $stmt->fetchAll() : $result;
         }
@@ -831,10 +913,26 @@ class DbConnect {
         }
     }
 
+    public function select($query=null) {
+        try {
+            $tablename = "inventory";
+            $query = "SELECT * FROM $this->DB_NAME.$tablename";
+            $stmt = $this->pdo->prepare($query);
+            $result = $stmt->execute();
+            
+            return $result ? $stmt->fetchAll() : $result;
+        }
+        catch(PDOException $e) {
+            throw new Exception(addError($e->getMessage()));
+            die();
+        }
+    }
+
     public function retrieveSpecial($query, $queryArray = null) {
         try {
             $result = false;
-            addError("retrieveSpecial");
+            //addError("retrieveSpecial");
+
             if(is_array($queryArray)) {
                 $stmt = $this->pdo->prepare($query);
                 $result =  $stmt->execute($queryArray);
@@ -860,6 +958,15 @@ class DbConnect {
         }
     }
 
+   /**
+    * Inserts an item into the database, it first gets the current column names of the table
+    * then builds prepared statement with array of key value pairs, from $_POST array 
+    * @param string $tablename name of the table in database
+    * @param array $values key value pair, with form field name as key and its POST as value
+    * @param string $ignorePK the name of the primary key value, which we can accept or ignore if autoincrement set in database
+    * @access public
+    */
+
     public function insert($tablename, $values, $ignorePK = null) {
         try {
             $result = false;
@@ -868,7 +975,6 @@ class DbConnect {
                 $keys = array_keys($values);
                 $tableCols = "";
                 $placeHolders = "";
-
 
                 print_r($columns);
                 // We wish to remove an autoincremented primary key
@@ -909,9 +1015,15 @@ class DbConnect {
             throw new Exception($e->getMessage());
             die();
         }
-
     }
 
+   /**
+    * Marks an item on the database as deleted, but does not actually delete item in database
+    * @param array $items key value pair 
+    * @param string $query the query we wish to prepare and execute
+    * @access public
+    * @throws PDOException If execute prepared statement fails
+    */
     public function update($items, $query) {
         try {
             foreach($items as $item) {
@@ -921,11 +1033,16 @@ class DbConnect {
             return $stmt->execute($items);
         }
         catch(PDOException $e) {
-            addError($e->getMessage(), get_class($this), "deleteItem");
+            throw new Exception($e->getMessage());
             die();
         }
     }
 
+   /**
+    * Marks an item on the database as deleted, but does not actually delete item in database
+    * @access public
+    * @throws PDOException If execute prepared statement fails
+    */
     public function deleteItem($itemId, $tablename, $changeVal) {
         try {
             $alterFlag = $this->pdo->prepare("UPDATE $this->DB_NAME.$tablename ".
@@ -934,7 +1051,8 @@ class DbConnect {
             $alterFlag->execute();
         }
         catch(PDOException $e) {
-            die(addError($e->getMessage(), get_class($this), "deleteItem"));
+            throw new Exception($e->getMessage());
+            die();
         }
     }
 
